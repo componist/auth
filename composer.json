@@ -1,0 +1,39 @@
+{
+    "name": "componist/auth",
+    "keywords": [],
+    "homepage": "",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Componist Developer",
+            "email": "info@componist.dev",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "livewire/livewire": "^3.6"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Componist\\Auth\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "Componist\\Auth\\AuthServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

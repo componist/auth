@@ -9,8 +9,14 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Componist\Auth\Livewire\Auth\VerifyEmail;
+use Componist\Auth\Livewire\Auth\ResetPassword;
+use Componist\Auth\Livewire\Auth\ForgotPassword;
 use Componist\Auth\Middleware\TwoFactorMiddleware;
 use Componist\Auth\Middleware\VerifyEmailMiddleware;
+use Componist\Auth\Livewire\Auth\UserLoginController;
+use Componist\Auth\Livewire\Auth\UserRegisterController;
+use Componist\Auth\Livewire\Auth\TwoFactorAuthController;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -29,12 +35,12 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'componistAuth');
 
-        Livewire::component('auth.register', \Componist\Auth\Livewire\Auth\UserLoginController::class);
-        Livewire::component('auth.login', \Componist\Auth\Livewire\Auth\UserRegisterController::class);
-        Livewire::component('auth.verify-email', \Componist\Auth\Livewire\Auth\VerifyEmail::class);
-        Livewire::component('auth.two-factor-auth-controller', \Componist\Auth\Livewire\Auth\TwoFactorAuthController::class);
-        Livewire::component('auth.forgot-password', \Componist\Auth\Livewire\Auth\ForgotPassword::class);
-        Livewire::component('auth.reset-password', \Componist\Auth\Livewire\Auth\ResetPassword::class);
+        Livewire::component('auth.register',UserLoginController::class);
+        Livewire::component('auth.login', UserRegisterController::class);
+        Livewire::component('auth.verify-email', VerifyEmail::class);
+        Livewire::component('auth.two-factor-auth-controller', TwoFactorAuthController::class);
+        Livewire::component('auth.forgot-password', ForgotPassword::class);
+        Livewire::component('auth.reset-password', ResetPassword::class);
     }
     /**
      * Bootstrap services.

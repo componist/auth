@@ -34,13 +34,6 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'componistAuth');
-
-        Livewire::component('auth.register',UserLoginController::class);
-        Livewire::component('auth.login', UserRegisterController::class);
-        Livewire::component('auth.verify-email', VerifyEmail::class);
-        Livewire::component('auth.two-factor-auth-controller', TwoFactorAuthController::class);
-        Livewire::component('auth.forgot-password', ForgotPassword::class);
-        Livewire::component('auth.reset-password', ResetPassword::class);
     }
     /**
      * Bootstrap services.
@@ -49,6 +42,14 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Livewire::component('auth.register',UserLoginController::class);
+        Livewire::component('auth.login', UserRegisterController::class);
+        Livewire::component('auth.verify-email', VerifyEmail::class);
+        Livewire::component('auth.two-factor-auth-controller', TwoFactorAuthController::class);
+        Livewire::component('auth.forgot-password', ForgotPassword::class);
+        Livewire::component('auth.reset-password', ResetPassword::class);
+
+
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('twofactor', TwoFactorMiddleware::class);
         $router->aliasMiddleware('verify', VerifyEmailMiddleware::class);

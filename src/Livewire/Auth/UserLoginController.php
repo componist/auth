@@ -23,16 +23,16 @@ class UserLoginController extends Component
     public function mount()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard.index');
+            return redirect()->route(config('componist_auth.home'));
         }
     }
 
     #[Title('Login')]
     public function render()
     {
-        return view('componistAuth::livewire.auth.user-login-controller')
+        return view('componistAuth::livewire.auth.login')
         // ->layout('layouts.app')
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 
@@ -45,21 +45,23 @@ class UserLoginController extends Component
         if (Auth::attempt($validate, $this->remember)) {
             RateLimiter::clear($this->throttleKey());
 
-            if (! Auth::user()->hasVerifiedEmail()) {
-                Auth::user()->sendEmailVerificationNotification();
+             if (config('componist_auth.verification')) {
+                if (! Auth::user()->hasVerifiedEmail()) {
+                    Auth::user()->sendEmailVerificationNotification();
 
-                return redirect()->route('verification.notice');
+                    return redirect()->route('componist.auth.verification.notice');
+                }
             }
 
-            if (config('auth.2fa_enabled')) {
+            if (config('componist_auth.two-factor')) {
                 Auth::user()->generateTwoFactorCode();
 
-                return redirect()->route('twoFactorAuth');
+                return redirect()->route('componist.auth.twoFactorAuth');
             }
 
             session()->regenerate();
 
-            return redirect()->route('dashboard.index');
+            return redirect()->route(config('componist_auth.home'));
         }
 
         RateLimiter::hit($this->throttleKey(), 1800); // 30 Min.

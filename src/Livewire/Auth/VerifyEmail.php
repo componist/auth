@@ -11,7 +11,7 @@ class VerifyEmail extends Component
     public function mount()
     {
         if (Auth::user()->email_verified_at) {
-            return redirect()->route('dashboard.index');
+            return redirect()->route(config('componist_auth.home'));
         }
     }
 
@@ -19,8 +19,7 @@ class VerifyEmail extends Component
     public function render()
     {
         return view('componistAuth::livewire.auth.verify-email')
-        // ->layout('layouts.app');
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 

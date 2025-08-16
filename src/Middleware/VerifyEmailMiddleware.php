@@ -18,11 +18,11 @@ class VerifyEmailMiddleware
     {
         // nicht angemeldet
         if (Auth::check() === false) {
-            return redirect()->route('login');
+            return redirect()->route('componist.auth.login');
         }
         // mail ist noch nicht bestätigt
         if (Auth::user()->email_verified_at === null) {
-            return redirect()->route('verification.notice');
+            return redirect()->route('componist.auth.verification.notice');
         }
 
         return $next($request);

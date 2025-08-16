@@ -28,16 +28,16 @@ class UserRegisterController extends Component
     public function mount()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard.index');
+            return redirect()->route(config('componist_auth.home'));
         }
     }
 
     #[Title('Account anlegen')]
     public function render()
     {
-        return view('componistAuth::livewire.auth.user-register-controller')
+        return view('componistAuth::livewire.auth.register')
         // ->layout('layouts.app')
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 
@@ -66,6 +66,6 @@ class UserRegisterController extends Component
 
         session()->flash('status', 'Bestätigungs-E-Mail wurde gesendet.');
 
-        return redirect()->route('verification.notice');
+        return redirect()->route('componist.auth.verification.notice');
     }
 }

@@ -4,42 +4,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Components
+    | E-Mail Verification
     |--------------------------------------------------------------------------
      */
 
-    'components' => [
-
-    ],
+    'verification' => false,
     /*
     |--------------------------------------------------------------------------
-    | Livewire Components
+    | Two Faktor Auth
     |--------------------------------------------------------------------------
      */
-
-    'livewire' => [
-        'auth.user-register-controller' => Componist\Auth\Livewire\Auth\UserRegisterController::class,
-        'auth.user-login-controller' => Componist\Auth\Livewire\Auth\UserLoginController::class,
-        'auth.verify-email' => Componist\Auth\Livewire\Auth\VerifyEmail::class,
-        'auth.two-factor-auth-controller' => Componist\Auth\Livewire\Auth\TwoFactorAuthController::class,
-        'auth.forgot-password' => Componist\Auth\Livewire\Auth\ForgotPassword::class,
-        'auth.reset-password' => Componist\Auth\Livewire\Auth\ResetPassword::class
-    ],
-
+     'two-factor' => false,
     /*
     |--------------------------------------------------------------------------
-    | Components Prefix
+    | Home Path
     |--------------------------------------------------------------------------
-     */
-
-    'prefix' => '',
-
+    |
+    | Here you may configure the path where users will get redirected during
+    | authentication or password reset when the operations are successful
+    | and the user is authenticated. You are free to change this value.
+    |
+    */
+    'home' => 'dashboard.index',
     /*
     |--------------------------------------------------------------------------
-    | Third Party Asset Libraries
+    | Layout Frontend for Auth views
     |--------------------------------------------------------------------------
      */
-
-    'assets' => [],
-
+    'layouts-app' => 'layouts.app'
 ];

@@ -33,7 +33,7 @@ class ResetPassword extends Component
     public function render()
     {
         return view('componistAuth::livewire.auth.reset-password')
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 
@@ -59,7 +59,7 @@ class ResetPassword extends Component
         );
 
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return redirect()->route('componist.auth.login')->with('status', __($status));
         }
 
         $this->addError('email', __($status));

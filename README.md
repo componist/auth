@@ -2,6 +2,11 @@
 
 ## Install 
 
+### Publish config file
+```bash
+php artisan vendor:publish --tag=componist-auth-config
+```
+
 ### Add to User Model
 
 ```php
@@ -19,5 +24,25 @@ class User extends Authenticatable implements MustVerifyEmail
     use AddComponistAuthentication;
 
     //
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'two_factor_code',
+    ];
 }
+```
+
+
+### Auth Middlewares alias
+```
+verify => MustVerifyEmail
+
+twofactor => MustTwoFactor
+
 ```

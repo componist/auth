@@ -18,15 +18,17 @@ class ForgotPassword extends Component
     public function render()
     {
         return view('componistAuth::livewire.auth.forgot-password')
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 
     public function sendResetLink()
     {
-        $this->validate(['email' => 'required|email']);
+        $validate = $this->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(['email' => $this->email]);
+        $status = Password::sendResetLink(['email' => $validate['email'],function(){
+            return redirect()->route('componist.auth.password.reset');
+        }]);
 
         $this->status = __($status);
 

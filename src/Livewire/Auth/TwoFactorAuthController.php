@@ -19,7 +19,7 @@ class TwoFactorAuthController extends Component
     {
         return view('componistAuth::livewire.auth.two-factor-auth-controller')
         // ->layout('layouts.app');
-            ->extends('layouts.app')
+            ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }
 
@@ -33,7 +33,7 @@ class TwoFactorAuthController extends Component
 
                 Auth::user()->resetTwoFactorCode();
 
-                return redirect()->route('dashboard.index');
+                return redirect()->route(config('componist_auth.home'));
             }
 
             $this->loginMessage = 'Ungültiger Code';
@@ -41,7 +41,7 @@ class TwoFactorAuthController extends Component
         } else {
             Auth::logout();
 
-            return redirect()->route('login');
+            return redirect()->route('componist.auth.login');
         }
     }
 

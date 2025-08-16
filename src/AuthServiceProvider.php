@@ -21,16 +21,20 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'../../config/auth.php', 'authConfig');
-
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        
         Route::group(['middleware' => ['web']], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
         });
 
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'componistAuth');
 
-        // Livewire::component('dynamic-api.index', Index::class);
-
+        Livewire::component('auth.register', \Componist\Auth\Livewire\Auth\UserLoginController::class);
+        Livewire::component('auth.login', \Componist\Auth\Livewire\Auth\UserRegisterController::class);
+        Livewire::component('auth.verify-email', \Componist\Auth\Livewire\Auth\VerifyEmail::class);
+        Livewire::component('auth.two-factor-auth-controller', \Componist\Auth\Livewire\Auth\TwoFactorAuthController::class);
+        Livewire::component('auth.forgot-password', \Componist\Auth\Livewire\Auth\ForgotPassword::class);
+        Livewire::component('auth.reset-password', \Componist\Auth\Livewire\Auth\ResetPassword::class);
     }
     /**
      * Bootstrap services.
@@ -45,29 +49,6 @@ class AuthServiceProvider extends ServiceProvider
         
         $this->publishes([
             __DIR__.'/../config/auth.php' => config_path('componist_auth.php'),
-        ]);
-
-        // blade componente
-        $this->bootBladeComponents();
-
-        // livewire componente
-        $this->bootLivewireComponents();
-
+        ], 'componist-auth-config');
     }
-
-    private function bootBladeComponents(): void
-    {
-        foreach (config('authConfig.components', []) as $alias => $component) {
-            Blade::component(config('authConfig.prefix').$alias, $component);
-        }
-    }
-
-    private function bootLivewireComponents(): void
-    {
-        foreach (config('authConfig.livewire', []) as $alias => $component) {
-            Livewire::component(config('authConfig.prefix').$alias, $component);
-        }
-    }
-
-
 }

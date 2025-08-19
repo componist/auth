@@ -36,7 +36,6 @@ class UserRegisterController extends Component
     public function render()
     {
         return view('componistAuth::livewire.auth.register')
-        // ->layout('layouts.app')
             ->extends(config('componist_auth.layouts-app'))
             ->section('content');
     }

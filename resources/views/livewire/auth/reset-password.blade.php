@@ -31,7 +31,7 @@
 
             <div class="mt-7">
                 <button @click.prevent="$wire.resetPassword()" type="button"
-                    class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-primary-900 bg-primary-500 hover:bg-primary-600 mt-7">
+                    class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-dashboard-900 bg-dashboard-500 hover:bg-dashboard-600 mt-7">
                     Zurücksetzen
                 </button>
             </div>

@@ -31,5 +31,10 @@ return [
     | Layout Frontend for Auth views
     |--------------------------------------------------------------------------
      */
-    'layouts-app' => 'layouts.app'
+    'layouts-app' => 'layouts.app',
+
+    'features' => [
+        'register' => true,
+        'resetPasswords' => true,
+    ],
 ];

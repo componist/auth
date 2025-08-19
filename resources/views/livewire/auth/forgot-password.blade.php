@@ -20,7 +20,7 @@
 
                             <div class="mt-7">
                                 <button @click.prevent="show=true, $wire.sendResetLink()" type="button"
-                                    class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-primary-900 bg-primary-500 hover:bg-primary-600">
+                                    class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-dashboard-900 bg-dashboard-500 hover:bg-dashboard-600">
                                     Link senden
                                 </button>
                             </div>

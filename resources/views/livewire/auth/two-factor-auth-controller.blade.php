@@ -9,7 +9,7 @@
                 <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Code eingeben</label>
                 <div class="relative">
                     <input type="text" name="2fa_code" id="2fa_code" wire:model.live.debounce.300ms="twoFactorAuthCode"
-                        class="block w-full p-2 mt-1 bg-white border rounded border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        class="block w-full p-2 mt-1 bg-white border rounded border-dashboard-500 focus:outline-none focus:ring-2 focus:ring-dashboard-500"
                         required autofocus>
                     <button @click.prevent="$wire.clear" type="button"
                         class="absolute top-0 bottom-0 z-10 flex items-center justify-center cursor-pointer right-2 text-slate-300 hover:text-slate-500">
@@ -43,7 +43,7 @@
 
                         <template x-if="!login">
                             <button type="button" @click.prevent="login=true, $wire.login()"
-                                class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-primary-900 bg-primary-500 hover:bg-primary-600">Code
+                                class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-dashboard-900 bg-dashboard-500 hover:bg-dashboard-600">Code
                                 bestätigen</button>
                         </template>
 

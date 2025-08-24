@@ -5,6 +5,15 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 
+
+Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill(); // markiert die E-Mail als verifiziert
+
+    return redirect('/dashboard');
+})->middleware(['auth', 'signed'])->name('componist.auth.verification.verify');
+    
+
+
 Route::name('componist.auth.')->group(function(){
     Route::get('login', Componist\Auth\Livewire\Auth\UserLoginController::class)->name('login');
 
@@ -25,13 +34,13 @@ Route::name('componist.auth.')->group(function(){
     })->name('logout');
 
 
-    if(config('componist_auth.verification')){
-        Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-            $request->fulfill(); // markiert die E-Mail als verifiziert
+    // if(config('componist_auth.verification')){
+    //     Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    //         $request->fulfill(); // markiert die E-Mail als verifiziert
 
-            return redirect('/dashboard');
-        })->middleware(['auth', 'signed'])->name('componist.auth.verification.verify');
-    }
+    //         return redirect('/dashboard');
+    //     })->middleware(['auth', 'signed'])->name('componist.auth.verification.verify');
+    // }
 
     Route::middleware('auth')->group(function () {
 

@@ -10,7 +10,7 @@ Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $reque
     $request->fulfill(); // markiert die E-Mail als verifiziert
 
     return redirect('/dashboard');
-})->middleware(['auth', 'signed'])->name('componist.auth.verification.verify');
+})->middleware(['auth', 'signed'])->name('verification.verify');
     
 
 

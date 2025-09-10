@@ -47,7 +47,7 @@
 
                     {{-- <template x-if="!login"> --}}
                     <button type="submit" {{-- @click.prevent="login=true, $wire.login()" --}}
-                        class="inline-block w-full py-3 font-bold uppercase rounded-full shadow-sm cursor-pointer px-7 text-dashboard-900 bg-dashboard-500 hover:bg-dashboard-600">Login</button>
+                        class="inline-block w-full py-3 font-bold text-white uppercase rounded-full shadow-sm cursor-pointer px-7 bg-dashboard-500 hover:bg-dashboard-600">Login</button>
                     {{-- </template> --}}
 
                     {{-- <template x-if="login"> -

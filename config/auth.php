@@ -31,7 +31,7 @@ return [
     | Layout Frontend for Auth views
     |--------------------------------------------------------------------------
      */
-    'layouts-app' => 'layouts.app',
+    'layouts-app' => Componist\Core\View\Components\GuestLayout::class,
 
     'features' => [
         'register' => true,

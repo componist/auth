@@ -45,21 +45,22 @@
 
                 <div x-data="{ login: false }" class="mt-7">
 
-                    {{-- <template x-if="!login"> --}}
-                    <button type="submit" {{-- @click.prevent="login=true, $wire.login()" --}}
-                        class="inline-block w-full py-3 font-bold text-white uppercase rounded-full shadow-sm cursor-pointer px-7 bg-dashboard-500 hover:bg-dashboard-600">Login</button>
-                    {{-- </template> --}}
+                    <template x-if="!login">
+                        <button {{-- type="submit"  --}} type="button" @click.prevent="login=true, $wire.login()"
+                            class="inline-block w-full py-3 font-bold text-white uppercase rounded-full shadow-sm cursor-pointer px-7 bg-dashboard-500 hover:bg-dashboard-600">Login</button>
+                    </template>
 
-                    {{-- <template x-if="login"> -
-                <p class="text-center animate-pulse">Ihre Authentifizierungs-Mail wird versendet</p>
-                </template> --}}
+                    <template x-if="login">
+                        {{-- <p class="text-center animate-pulse">Ihre Authentifizierungs-Mail wird versendet</p> --}}
+                        <p class="text-center animate-pulse">Sie werden Eingelogt bitte warten...</p>
+                    </template>
                 </div>
             </form>
 
             @if (config('componist_auth.features.resetPasswords'))
                 <div class="text-center mt-7">
                     <a
-                        href="{{ route('componist.auth.password.request') }}"class="font-bold cursor-pointer text-slate-300 hover:text-slate-600">Passwort
+                        href="{{ route('componist.auth.password.request') }}"class="font-bold cursor-pointer text-slate-400 hover:text-slate-600">Passwort
                         vergessen</a>
                 </div>
             @endif

@@ -22,8 +22,16 @@ class UserLoginController extends Component
 
     public function mount()
     {
+        $examplEmail = config('componist_auth.login.example.email');
+        $examplPassword = config('componist_auth.login.example.password');
+
         if (Auth::check()) {
             return redirect()->route(config('componist_auth.home'));
+        }
+
+        if($examplEmail && $examplPassword){
+           $this->email = $examplEmail;
+           $this->password = $examplPassword;
         }
     }
 

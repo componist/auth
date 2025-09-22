@@ -44,7 +44,7 @@ class UserLoginController extends Component
         if (Auth::attempt($validate, $this->remember)) {
             RateLimiter::clear($this->throttleKey());
 
-             if (config('componist_auth.verification')) {
+            if (config('componist_auth.verification')) {
                 if (! Auth::user()->hasVerifiedEmail()) {
                     Auth::user()->sendEmailVerificationNotification();
 

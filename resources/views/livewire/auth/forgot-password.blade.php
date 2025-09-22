@@ -10,7 +10,7 @@
                     <template x-if="!show">
                         <div>
                             <div>
-                                <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">E-Mail-Adresse</label>
+                                <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">E-Mail-Adresse</label>
                                 <input type="email" wire:model.live.debounce.300ms="email"
                                     class="block w-full px-5 py-2 bg-white rounded-lg" required>
                                 @error('email')

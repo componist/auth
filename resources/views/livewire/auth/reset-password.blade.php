@@ -7,7 +7,7 @@
 
             <div class="grid grid-cols-1 gap-3">
                 {{-- <div> --}}
-                {{-- <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">E-Mail-Adresse</label> --}}
+                {{-- <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">E-Mail-Adresse</label> --}}
                 <input type="hidden" wire:model="email" class="block w-full px-5 py-2 bg-white rounded-lg" disabled>
                 {{-- @error('email')
                         <span class="text-sm text-red-600">{{ $message }}</span>
@@ -15,7 +15,7 @@
                 {{-- </div> --}}
 
                 <div>
-                    <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Neues Passwort</label>
+                    <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Neues Passwort</label>
                     <input type="password" wire:model="password" class="block w-full px-5 py-2 bg-white rounded-lg">
                     @error('password')
                         <span class="text-sm text-red-600">{{ $message }}</span>
@@ -23,7 +23,7 @@
                 </div>
 
                 <div>
-                    <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Passwort bestätigen</label>
+                    <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Passwort bestätigen</label>
                     <input type="password" wire:model="password_confirmation"
                         class="block w-full px-5 py-2 bg-white rounded-lg">
                 </div>

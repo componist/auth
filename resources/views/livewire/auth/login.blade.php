@@ -5,7 +5,7 @@
 
             <form wire:submit="login">
                 <div class="mb-5">
-                    <label for="email" class="block mb-2 ml-2 text-sm font-medium text-gray-700">E-Mail</label>
+                    <label for="email" class="block mb-2 ml-2 text-sm font-medium text-slate-700">E-Mail</label>
                     <input id="email" name="email" wire:model="email" type="email"
                         class="block w-full px-5 py-2 bg-white rounded-lg">
                     @error('email')
@@ -14,7 +14,7 @@
                 </div>
 
                 <div>
-                    <label for="password" class="block mb-2 ml-2 text-sm font-medium text-gray-700">Passwort</label>
+                    <label for="password" class="block mb-2 ml-2 text-sm font-medium text-slate-700">Passwort</label>
 
                     <div x-data="{ show: false }" class="relative">
                         <input id="password" name="password" wire:model="password"

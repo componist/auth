@@ -7,19 +7,19 @@
             <form wire:submit.prevent="register" class="grid grid-cols-1 gap-3">
 
                 <div>
-                    <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Name</label>
+                    <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Name</label>
                     <input type="text" wire:model.live="name" placeholder=""
                         class="block w-full px-5 py-2 bg-white rounded-lg" />
                 </div>
 
                 <div>
-                    <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">E-Mail</label>
+                    <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">E-Mail</label>
                     <input type="email" wire:model.live="email" placeholder=""
                         class="block w-full px-5 py-2 bg-white rounded-lg" />
                 </div>
 
                 <div>
-                    <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Passwort</label>
+                    <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Passwort</label>
                     <div x-data="{ show: false }" class="relative">
                         <input wire:model.live="password" x-bind:type="show ? 'text' : 'password'"
                             class="block w-full px-5 py-2 bg-white rounded-lg">
@@ -45,7 +45,7 @@
 
                 @if ($password != null)
                     <div>
-                        <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Passwort bestätigen</label>
+                        <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Passwort bestätigen</label>
                         <input type="password" wire:model.live="password_confirmation" placeholder="Passwort bestätigen"
                             class="block w-full px-5 py-2 bg-white rounded-lg" />
                     </div>

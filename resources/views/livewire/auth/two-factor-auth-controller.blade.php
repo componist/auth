@@ -6,7 +6,7 @@
             <h1 class="text-4xl font-bold text-center mt-9 mb-7">Zwei-Faktor-Authentifizierung</h1>
 
             <div class="mt-5">
-                <label class="block mb-2 ml-2 text-sm font-medium text-gray-700">Code eingeben</label>
+                <label class="block mb-2 ml-2 text-sm font-medium text-slate-700">Code eingeben</label>
                 <div class="relative">
                     <input type="text" name="2fa_code" id="2fa_code" wire:model.live.debounce.300ms="twoFactorAuthCode"
                         class="block w-full p-2 mt-1 bg-white border rounded border-dashboard-500 focus:outline-none focus:ring-2 focus:ring-dashboard-500"

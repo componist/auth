@@ -26,7 +26,7 @@ class ForgotPassword extends Component
     {
         $validate = $this->validate(['email' => 'required|email']);
 
-        $status = Password::sendResetLink(['email' => $validate['email'],function(){
+        $status = Password::sendResetLink(['email' => $validate['email'], function () {
             return redirect()->route('componist.auth.password.reset');
         }]);
 

@@ -46,3 +46,14 @@ verify => MustVerifyEmail
 twofactor => MustTwoFactor
 
 ```
+
+### Publish packages views
+```bash
+php artisan vendor:publish --tag=componist.auth.publish.views
+```
+
+
+### in your env
+```env
+AUTH_LOGIN_ROUTE=componist.auth.login
+```

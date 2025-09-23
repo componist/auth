@@ -55,6 +55,10 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__.'/../config/auth.php' => config_path('componist_auth.php'),
-        ], 'componist-auth-config');
+        ], 'componist.auth.publish.config');
+
+        $this->publishes([
+           __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth')
+        ],'componist.auth.publish.views');
     }
 }

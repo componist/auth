@@ -11,15 +11,15 @@ Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $reque
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::name('componist.auth.')->group(function () {
-    Route::get('login', Componist\Auth\Livewire\Auth\UserLoginController::class)->name('login');
+    Route::livewire('login', Componist\Auth\Livewire\Auth\UserLoginController::class)->name('login');
 
     if (config('componist_auth.features.resetPasswords')) {
-        Route::get('/forgot-password', Componist\Auth\Livewire\Auth\ForgotPassword::class)->middleware('guest')->name('password.request');
-        Route::get('/reset-password/{token}', Componist\Auth\Livewire\Auth\ResetPassword::class)->middleware('guest')->name('password.reset');
+        Route::livewire('/forgot-password', Componist\Auth\Livewire\Auth\ForgotPassword::class)->middleware('guest')->name('password.request');
+        Route::livewire('/reset-password/{token}', Componist\Auth\Livewire\Auth\ResetPassword::class)->middleware('guest')->name('password.reset');
     }
 
     if (config('componist_auth.features.register')) {
-        Route::get('register', Componist\Auth\Livewire\Auth\UserRegisterController::class)->name('register');
+        Route::livewire('register', Componist\Auth\Livewire\Auth\UserRegisterController::class)->name('register');
     }
 
     Route::get('logout', function () {
@@ -39,11 +39,11 @@ Route::name('componist.auth.')->group(function () {
     Route::middleware('auth')->group(function () {
 
         if (config('componist_auth.verification')) {
-            Route::get('email/verify', Componist\Auth\Livewire\Auth\VerifyEmail::class)->name('verification.notice');
+            Route::livewire('email/verify', Componist\Auth\Livewire\Auth\VerifyEmail::class)->name('verification.notice');
         }
 
         if (config('componist_auth.two-factor')) {
-            Route::get('two-factor-auth', Componist\Auth\Livewire\Auth\TwoFactorAuthController::class)->name('twoFactorAuth');
+            Route::livewire('two-factor-auth', Componist\Auth\Livewire\Auth\TwoFactorAuthController::class)->name('twoFactorAuth');
         }
     });
 });

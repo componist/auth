@@ -6,6 +6,7 @@ namespace Componist\Auth\Livewire\Auth;
 
 use Componist\Auth\Livewire\Concerns\RendersAuthView;
 use Componist\Auth\Support\AuthView;
+use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Password;
@@ -69,7 +70,7 @@ class ResetPassword extends Component
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            $this->redirect(route('componist.auth.login'), navigate: true);
+            $this->redirect(route(ComponistAuthConfig::loginRoute()), navigate: true);
 
             return;
         }

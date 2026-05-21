@@ -47,7 +47,7 @@ class TwoFactorAuthController extends Component
         if (! Auth::check()) {
             Auth::logout();
 
-            $this->redirect(route('componist.auth.login'), navigate: true);
+            $this->redirect(route(ComponistAuthConfig::loginRoute()), navigate: true);
 
             return;
         }

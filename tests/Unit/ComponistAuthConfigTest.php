@@ -18,6 +18,13 @@ class ComponistAuthConfigTest extends TestCase
         $this->assertSame('dashboard.index', ComponistAuthConfig::homeRoute());
     }
 
+    public function test_login_route_returns_configured_route_name(): void
+    {
+        config(['componist_auth.routes.login' => 'login']);
+
+        $this->assertSame('login', ComponistAuthConfig::loginRoute());
+    }
+
     public function test_user_model_returns_configured_class(): void
     {
         $this->assertSame(User::class, ComponistAuthConfig::userModel());

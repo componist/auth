@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Componist\Auth\Http\Controllers;
 
+use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,6 +17,6 @@ class LogoutController
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 
-        return redirect()->route('componist.auth.login');
+        return redirect()->route(ComponistAuthConfig::loginRoute());
     }
 }

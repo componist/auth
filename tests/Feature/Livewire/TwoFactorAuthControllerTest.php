@@ -127,6 +127,6 @@ class TwoFactorAuthControllerTest extends TestCase
     {
         Livewire::test(TwoFactorAuthController::class)
             ->call('login')
-            ->assertRedirect(route('componist.auth.login'));
+            ->assertRedirect(route('login'));
     }
 }

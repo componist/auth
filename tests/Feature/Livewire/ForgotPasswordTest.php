@@ -35,6 +35,14 @@ class ForgotPasswordTest extends TestCase
             ->assertHasNoErrors(['email']);
 
         Notification::assertSentTo($user, ResetPassword::class);
+
+        $notification = Notification::sent($user, ResetPassword::class)->first();
+        $this->assertNotNull($notification);
+        $mail = $notification->toMail($user);
+        $this->assertStringContainsString(route('password.reset', [
+            'token' => $notification->token,
+            'email' => $user->email,
+        ], false), (string) $mail->actionUrl);
     }
 
     public function test_send_reset_link_shows_same_message_for_unknown_email(): void

@@ -36,7 +36,7 @@ class ResetPasswordTest extends TestCase
             ->set('password', 'new-password-99')
             ->set('password_confirmation', 'new-password-99')
             ->call('resetPassword')
-            ->assertRedirect(route('componist.auth.login'));
+            ->assertRedirect(route('login'));
 
         $user->refresh();
 

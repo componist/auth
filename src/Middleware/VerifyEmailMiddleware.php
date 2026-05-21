@@ -22,7 +22,7 @@ class VerifyEmailMiddleware
         }
 
         if (! Auth::check()) {
-            return redirect()->route('componist.auth.login');
+            return redirect()->route(ComponistAuthConfig::loginRoute());
         }
 
         $user = Auth::user();

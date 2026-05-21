@@ -16,6 +16,11 @@ final class ComponistAuthConfig
         return self::string('componist_auth.home');
     }
 
+    public static function loginRoute(): string
+    {
+        return self::string('componist_auth.routes.login');
+    }
+
     public static function layoutComponent(): string
     {
         return self::string('componist_auth.layouts-app');

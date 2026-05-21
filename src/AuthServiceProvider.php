@@ -12,10 +12,15 @@ use Componist\Auth\Livewire\Auth\UserRegisterController;
 use Componist\Auth\Livewire\Auth\VerifyEmail;
 use Componist\Auth\Middleware\TwoFactorMiddleware;
 use Componist\Auth\Middleware\VerifyEmailMiddleware;
+use Componist\Auth\Support\ComponistAuthConfig;
+use Componist\Auth\Support\ComponistAuthRouteAliases;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Contracts\View\Factory as ViewFactory;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -44,6 +49,10 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Authenticate::redirectUsing(
+            fn (Request $request): string => route(ComponistAuthConfig::loginRoute()),
+        );
+
         Livewire::component('auth.login', UserLoginController::class);
         Livewire::component('auth.register', UserRegisterController::class);
         Livewire::component('auth.verify-email', VerifyEmail::class);
@@ -62,5 +71,15 @@ class AuthServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth'),
         ], 'componist.auth.publish.views');
+
+        $this->app->booted(function (): void {
+            URL::resolveMissingNamedRoutesUsing(
+                fn (string $name, array $parameters, bool $absolute): ?string => ComponistAuthRouteAliases::resolve(
+                    $name,
+                    $parameters,
+                    $absolute,
+                ),
+            );
+        });
     }
 }

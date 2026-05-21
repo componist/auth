@@ -1,17 +1,19 @@
 <?php
 
 use Componist\Auth\Http\Controllers\LogoutController;
+use Componist\Auth\Livewire\Auth\UserLoginController;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware('guest')->group(function (): void {
+    Route::livewire('login', UserLoginController::class)->name('login');
+    Route::livewire('/forgot-password', Componist\Auth\Livewire\Auth\ForgotPassword::class)->name('password.request');
+    Route::livewire('/reset-password/{token}', Componist\Auth\Livewire\Auth\ResetPassword::class)->name('password.reset');
+});
+
 Route::name('componist.auth.')->group(function () {
     Route::middleware('guest')->group(function () {
-        Route::livewire('login', Componist\Auth\Livewire\Auth\UserLoginController::class)->name('login');
-
-        Route::livewire('/forgot-password', Componist\Auth\Livewire\Auth\ForgotPassword::class)->name('password.request');
-        Route::livewire('/reset-password/{token}', Componist\Auth\Livewire\Auth\ResetPassword::class)->name('password.reset');
-
         Route::livewire('register', Componist\Auth\Livewire\Auth\UserRegisterController::class)->name('register');
     });
 

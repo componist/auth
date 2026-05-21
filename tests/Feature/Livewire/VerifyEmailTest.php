@@ -73,6 +73,6 @@ class VerifyEmailTest extends TestCase
     public function test_guest_is_redirected_to_login(): void
     {
         Livewire::test(VerifyEmailComponent::class)
-            ->assertRedirect(route('componist.auth.login'));
+            ->assertRedirect(route('login'));
     }
 }

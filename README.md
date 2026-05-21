@@ -133,6 +133,9 @@ return [
     'verification' => (bool) env('COMPONIST_AUTH_VERIFICATION', false),
     'two-factor' => (bool) env('COMPONIST_AUTH_TWO_FACTOR', false),
     'home' => 'dashboard.index', // Named Route nach erfolgreichem Login
+    'routes' => [
+        'login' => 'login', // Primärer Routenname (Laravel-Standard)
+    ],
     'layouts-app' => \Componist\Core\View\Components\GuestLayout::class,
     'user_model' => \App\Models\User::class,
     'features' => [
@@ -153,6 +156,7 @@ return [
 | Key | Beschreibung |
 |-----|--------------|
 | `home` | Named Route für Redirects nach Login, Verify, 2FA |
+| `routes.login` | Primärer Routenname für Login und Gäste-Redirects (`ComponistAuthConfig::loginRoute()`) |
 | `layouts-app` | Blade-Layout-Komponente (`@extends` / `section('content')`) |
 | `user_model` | Muss `Model`, `Authenticatable` und `TwoFactorAuthenticatable` erfüllen |
 | `features.register` | Bei `false`: Register-Route liefert 404 |
@@ -279,10 +283,23 @@ use App\Http\Middleware\Authenticate;
     $middleware->alias([
         'auth' => Authenticate::class,
     ]);
-
-    $middleware->redirectGuestsTo(fn () => route('componist.auth.login'));
 })
 ```
+
+Der `AuthServiceProvider` übernimmt zusätzlich (ohne Eintrag in `bootstrap/app.php`):
+
+- **Login-Route** `login` (Laravel-Standard, Pfad `/login`, Middleware `guest`)
+- **Legacy-Alias** `componist.auth.login` → gleiche URL (über `URL::resolveMissingNamedRoutesUsing()`)
+- **Gäste-Redirect** `Authenticate::redirectUsing()` → `route(ComponistAuthConfig::loginRoute())`
+
+Eine `redirectGuestsTo()`-Zeile in `bootstrap/app.php` ist **nicht** nötig. Beide Aufrufe funktionieren in Blade und PHP:
+
+```blade
+<a href="{{ route('login') }}">Anmelden</a>
+<a href="{{ route('componist.auth.login') }}">Anmelden</a>
+```
+
+**Eigener Login (SSO, externe URL):** Wenn die Host-App ein anderes Redirect-Ziel braucht, `redirectGuestsTo()` in `bootstrap/app.php` setzen und prüfen, dass der Provider-Boot nicht ungewollt überschreibt — oder `componist_auth.routes.login` auf eine eigene Named Route zeigen lassen.
 
 ### 3. Geschützte Routen
 
@@ -318,14 +335,14 @@ SESSION_SAME_SITE=lax
 
 ## Routen
 
-Alle Routen tragen das Namenspräfix `componist.auth.` und laufen in der `web`-Middleware-Gruppe.
+Alle Auth-Routen laufen in der `web`-Middleware-Gruppe (vom `AuthServiceProvider` geladen). Die meisten Namen tragen das Präfix `componist.auth.` — **ausnahme:** Login.
 
 | Methode | Pfad | Route-Name | Middleware | Beschreibung |
 |---------|------|------------|------------|--------------|
-| GET | `/login` | `componist.auth.login` | `guest` | Login-Formular |
+| GET | `/login` | `login` | `guest` | Login-Formular (Livewire) |
+| GET | `/forgot-password` | `password.request` (Alias: `componist.auth.password.request`) | `guest` | Passwort vergessen |
+| GET | `/reset-password/{token}` | `password.reset` (Alias: `componist.auth.password.reset`) | `guest` | Neues Passwort setzen — URL in Reset-E-Mails |
 | GET | `/register` | `componist.auth.register` | `guest` | Registrierung (404 wenn deaktiviert) |
-| GET | `/forgot-password` | `componist.auth.password.request` | `guest` | Passwort vergessen |
-| GET | `/reset-password/{token}` | `componist.auth.password.reset` | `guest` | Neues Passwort setzen |
 | GET/POST | `/logout` | `componist.auth.logout` | `auth` | Abmelden (Session invalidieren, Redirect Login) |
 | GET | `/email/verify` | `componist.auth.verification.notice` | `auth` | Hinweis „E-Mail bestätigen“ |
 | GET | `/email/verify/{id}/{hash}` | `componist.auth.verification.verify` | `auth`, `signed`, `throttle:6,1` | Link aus E-Mail |
@@ -344,6 +361,24 @@ Oder die Package-Komponente:
 ```
 
 `GET` und `POST` sind möglich; für Menü-Links reicht `GET`.
+
+### Laravel-Standard-Routennamen & Legacy-Aliase
+
+| Pfad | Primärer Name | Legacy-Alias |
+|------|---------------|--------------|
+| `/login` | `login` | `componist.auth.login` |
+| `/forgot-password` | `password.request` | `componist.auth.password.request` |
+| `/reset-password/{token}` | `password.reset` | `componist.auth.password.reset` |
+
+Die Reset-E-Mail (`Illuminate\Auth\Notifications\ResetPassword`) verwendet `route('password.reset', …)` — dafür muss der primäre Name `password.reset` existieren.
+
+Aliase werden über `ComponistAuthRouteAliases` und `URL::resolveMissingNamedRoutesUsing()` aufgelöst.
+
+Intern nutzt das Package `ComponistAuthConfig::loginRoute()` (Standard: `login`) für Redirects nach Logout, Verify und in der `Authenticate`-Middleware.
+
+```bash
+php artisan route:list --name=login
+```
 
 ---
 
@@ -467,6 +502,20 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 | CSRF | Standard Laravel `web`-Stack |
 | Feature-Flags | Deaktivierte Features → `abort(404)` auf den jeweiligen Livewire-Seiten |
 
+### Login-Redirect & Routen-Alias (Package-Integration)
+
+| Thema | Verhalten | Sicherheit |
+|-------|-----------|------------|
+| `Authenticate::redirectUsing()` | Setzt global das Redirect-Ziel für nicht authentifizierte Nutzer auf `route(ComponistAuthConfig::loginRoute())` | Kein Open Redirect — nur Named Routes der App |
+| `URL::resolveMissingNamedRoutesUsing()` | Mappt nur fest definierte Paare (`ComponistAuthRouteAliases`: Login + Passwort-Reset) | Kein beliebiges Auflösen fremder Routennamen; Parameter werden an die Zielroute durchgereicht |
+| Login-Route | Weiterhin `guest`-Middleware | Kein Zugriff für eingeloggte Nutzer auf die Login-Seite (Redirect zu `home`) |
+
+**Hinweise für Host-Apps:**
+
+- Wenn die Anwendung **bereits** einen `resolveMissingNamedRoutesUsing`-Callback nutzt, kann der Package-Callback ihn **ersetzen** (Laravel erlaubt nur einen Resolver). In dem Fall Alias-Logik in der App nachbilden oder nur `route('login')` verwenden.
+- `componist_auth.routes.login` nur auf vertrauenswürdige Named Routes setzen (wie jede Auth-Config).
+- Der frühere Production-Fehler `Route [login] not defined` entstand, wenn Laravel standardmäßig nach `login` suchte, das Package aber nur `componist.auth.login` kannte — behoben durch primären Namen `login` plus Alias.
+
 ### Bewusst nicht enthalten (Roadmap)
 
 - TOTP / Authenticator-Apps
@@ -482,13 +531,16 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 - [ ] `COMPONIST_AUTH_REGISTER=false`
 - [ ] `COMPONIST_AUTH_VERIFICATION` / `COMPONIST_AUTH_TWO_FACTOR` bewusst setzen
 - [ ] Keine Demo-Credentials in `componist_auth.login.example`
-- [ ] `App\Http\Middleware\Authenticate` registriert (`auth`-Alias)
-- [ ] `redirectGuestsTo(route('componist.auth.login'))`
+- [ ] `App\Http\Middleware\Authenticate` registriert (`auth`-Alias in `bootstrap/app.php`)
+- [ ] **Kein** manuelles `redirectGuestsTo()` nötig — Package setzt Redirect auf `login` (prüfen nach Deploy: geschützte URL → Redirect `/login`, kein 500)
+- [ ] Nach Deploy: `php artisan route:clear` und `php artisan config:clear` (bei Route-/Config-Cache)
+- [ ] `php artisan route:list --name=login` zeigt Route `login` → `/login`
 - [ ] `URL::forceScheme('https')` in Production
 - [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_SAME_SITE=lax`
 - [ ] Mailer konfiguriert und getestet (2FA + Verify)
 - [ ] Alle geschützten Routen nutzen `middleware(['auth'])`
 - [ ] Logout-Links zeigen auf `route('componist.auth.logout')` (GET reicht)
+- [ ] Blade-Links zum Login: `route('login')` oder `route('componist.auth.login')` (beides gleichwertig)
 
 ---
 
@@ -559,7 +611,24 @@ Entspricht `vendor/bin/phpstan analyse -c phpstan.neon.dist` (Larastan, Level ma
 
 ### `ComponistAuthConfig`
 
-Zentraler Zugriff auf typisierte Config-Werte (`homeRoute()`, `userModel()`, `verificationEnabled()`, `twoFactorEnabled()`, `registerEnabled()`).
+Zentraler Zugriff auf typisierte Config-Werte:
+
+| Methode | Beschreibung |
+|---------|--------------|
+| `homeRoute()` | Named Route nach Login / Verify / 2FA |
+| `loginRoute()` | Named Route für Login und Gäste-Redirects (Config: `routes.login`) |
+| `userModel()` | Konfiguriertes User-Model (mit Contract-Prüfung) |
+| `verificationEnabled()` | Feature-Flag E-Mail-Verifizierung |
+| `twoFactorEnabled()` | Feature-Flag E-Mail-OTP |
+| `registerEnabled()` | Feature-Flag Registrierung |
+
+### `AuthServiceProvider` (Boot)
+
+| Registrierung | Zweck |
+|---------------|--------|
+| `Authenticate::redirectUsing()` | Gäste-Redirect auf `route(loginRoute())` |
+| `URL::resolveMissingNamedRoutesUsing()` | Legacy-Aliase via `ComponistAuthRouteAliases` |
+| Livewire-Komponenten, Middleware-Aliase `verify` / `twofactor` | UI und optionale Einzel-Middleware |
 
 ### `AuthenticatedUser`
 

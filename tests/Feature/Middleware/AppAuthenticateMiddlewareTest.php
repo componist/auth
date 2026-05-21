@@ -52,7 +52,7 @@ class AppAuthenticateMiddlewareTest extends TestCase
         $this->actingAs($user);
 
         $this->post(route('componist.auth.logout'))
-            ->assertRedirect(route('componist.auth.login'));
+            ->assertRedirect(route('login'));
 
         $this->assertGuest();
     }

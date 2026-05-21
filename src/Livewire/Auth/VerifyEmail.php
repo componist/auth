@@ -26,7 +26,7 @@ class VerifyEmail extends Component
         }
 
         if (! Auth::check()) {
-            $this->redirect(route('componist.auth.login'), navigate: true);
+            $this->redirect(route(ComponistAuthConfig::loginRoute()), navigate: true);
 
             return;
         }

@@ -13,7 +13,13 @@
     "require": {
         "livewire/livewire": "^3.0|^4.0"
     },
-    "require-dev": {},
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "larastan/larastan": "^3.9"
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse -c phpstan.neon.dist"
+    },
     "autoload": {
         "psr-4": {
             "Componist\\Auth\\": "src/"

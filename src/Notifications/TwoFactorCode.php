@@ -1,27 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Notifications;
 
-use App\Models\User;
+use Componist\Auth\Contracts\TwoFactorAuthenticatable;
+use Componist\Auth\Traits\AddComponistAuthentication;
 use Illuminate\Bus\Queueable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Carbon;
 
 class TwoFactorCode extends Notification
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct(public User $user)
-    {
-        //
-    }
+    public function __construct(
+        public TwoFactorAuthenticatable $user,
+        public string $code,
+    ) {}
 
     /**
-     * Get the notification's delivery channels.
-     *
      * @return array<int, string>
      */
     public function via(object $notifiable): array
@@ -29,28 +29,37 @@ class TwoFactorCode extends Notification
         return ['mail'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(TwoFactorAuthenticatable $notifiable): MailMessage
     {
+        $expiresLabel = 'unbekannt';
+
+        if ($notifiable instanceof Model) {
+            $expiresAt = AddComponistAuthentication::twoFactorExpiresAt($notifiable);
+            $expiresLabel = $expiresAt instanceof Carbon
+                ? $expiresAt->format('H:i')
+                : 'unbekannt';
+        }
+
+        $name = 'Nutzer';
+
+        if ($notifiable instanceof Model) {
+            $nameAttribute = $notifiable->getAttribute('name');
+            $name = is_string($nameAttribute) && $nameAttribute !== '' ? $nameAttribute : 'Nutzer';
+        }
+
         return (new MailMessage)
-            ->subject('Two Factor Code Mail')
-            ->greeting('Hallo '.$this->user->name.',')
+            ->subject('Zwei-Faktor-Code')
+            ->greeting('Hallo '.$name.',')
             ->line('Dein Zwei-Faktor-Code lautet:')
-            ->line($this->user->two_factor_code)
-            ->line('Gültig bis: '.$this->user->two_factor_expires_at->format('H:i'));
+            ->line($this->code)
+            ->line('Gültig bis: '.$expiresLabel);
     }
 
     /**
-     * Get the array representation of the notification.
-     *
      * @return array<string, mixed>
      */
     public function toArray(object $notifiable): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 }

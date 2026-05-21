@@ -12,38 +12,40 @@ use Componist\Auth\Livewire\Auth\UserRegisterController;
 use Componist\Auth\Livewire\Auth\VerifyEmail;
 use Componist\Auth\Middleware\TwoFactorMiddleware;
 use Componist\Auth\Middleware\VerifyEmailMiddleware;
+use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/auth.php', 'componist_auth');
+
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
-        Route::group(['middleware' => ['web']], function () {
+        Route::group(['middleware' => ['web']], function (): void {
             $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         });
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'componistAuth');
+
+        Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'componist-auth');
+
+        $this->callAfterResolving(ViewFactory::class, function (ViewFactory $view): void {
+            if (is_dir($vendorViews = resource_path('views/vendor/componistAuth'))) {
+                $view->prependNamespace('componistAuth', $vendorViews);
+            }
+        });
     }
 
-    /**
-     * Bootstrap services.
-     *
-     * @return void
-     */
-    public function boot()
+    public function boot(): void
     {
-        Livewire::component('auth.register', UserLoginController::class);
-        Livewire::component('auth.login', UserRegisterController::class);
+        Livewire::component('auth.login', UserLoginController::class);
+        Livewire::component('auth.register', UserRegisterController::class);
         Livewire::component('auth.verify-email', VerifyEmail::class);
         Livewire::component('auth.two-factor-auth-controller', TwoFactorAuthController::class);
         Livewire::component('auth.forgot-password', ForgotPassword::class);
@@ -58,7 +60,7 @@ class AuthServiceProvider extends ServiceProvider
         ], 'componist.auth.publish.config');
 
         $this->publishes([
-           __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth')
-        ],'componist.auth.publish.views');
+            __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth'),
+        ], 'componist.auth.publish.views');
     }
 }

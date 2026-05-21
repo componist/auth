@@ -3,13 +3,15 @@
         <div class="w-96">
             <h1 class="text-4xl font-bold text-center mt-9 mb-7">Login</h1>
 
-            <form wire:submit="login">
-                <div class="mb-5">
+            <form wire:submit="login" class="space-y-5">
+                <div>
                     <label for="email" class="block mb-2 ml-2 text-sm font-medium text-slate-700">E-Mail</label>
-                    <input id="email" name="email" wire:model="email" type="email"
-                        class="block w-full px-5 py-2 bg-white rounded-lg">
+                    <input id="email" name="email" wire:model="email" type="email" autocomplete="email"
+                        wire:loading.attr="disabled"
+                        wire:target="login"
+                        class="block w-full px-5 py-2 bg-white rounded-lg border border-transparent focus:border-dashboard-500 focus:outline-none focus:ring-2 focus:ring-dashboard-500/30">
                     @error('email')
-                        <p class="mt-3 text-xs text-red-600">{{ $message }}</p>
+                        <p class="mt-3 text-xs text-red-600" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -17,10 +19,14 @@
                     <label for="password" class="block mb-2 ml-2 text-sm font-medium text-slate-700">Passwort</label>
 
                     <div x-data="{ show: false }" class="relative">
-                        <input id="password" name="password" wire:model="password"
-                            x-bind:type="show ? 'text' : 'password'" class="block w-full px-5 py-2 bg-white rounded-lg">
-                        <button x-on:click="show = ! show" type="button"
-                            class="absolute top-0 bottom-0 z-10 flex items-center justify-center cursor-pointer w-7 right-2 text-slate-300 hover:text-slate-500">
+                        <input id="password" name="password" wire:model="password" autocomplete="current-password"
+                            x-bind:type="show ? 'text' : 'password'"
+                            wire:loading.attr="disabled"
+                            wire:target="login"
+                            class="block w-full px-5 py-2 bg-white rounded-lg border border-transparent focus:border-dashboard-500 focus:outline-none focus:ring-2 focus:ring-dashboard-500/30">
+                        <button x-on:click="show = ! show" type="button" tabindex="-1"
+                            class="absolute top-0 bottom-0 z-10 flex items-center justify-center cursor-pointer w-7 right-2 text-slate-300 hover:text-slate-500"
+                            aria-label="Passwort anzeigen">
 
                             <template x-if="show">
                                 <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" height="24"
@@ -39,29 +45,31 @@
                         </button>
                     </div>
                     @error('password')
-                        <p class="mt-3 text-xs text-red-600">{{ $message }}</p>
+                        <p class="mt-3 text-xs text-red-600" role="alert">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div x-data="{ login: false }" class="mt-7">
-
-                    <template x-if="!login">
-                        <button {{-- type="submit"  --}} type="button" @click.prevent="login=true, $wire.login()"
-                            class="inline-block w-full py-3 font-bold text-white uppercase rounded-full shadow-sm cursor-pointer px-7 bg-dashboard-500 hover:bg-dashboard-600">Login</button>
-                    </template>
-
-                    <template x-if="login">
-                        {{-- <p class="text-center animate-pulse">Ihre Authentifizierungs-Mail wird versendet</p> --}}
-                        <p class="text-center animate-pulse">Sie werden Eingelogt bitte warten...</p>
-                    </template>
+                <div class="pt-2">
+                    <button
+                        type="submit"
+                        wire:loading.attr="disabled"
+                        wire:target="login"
+                        class="inline-flex items-center justify-center gap-2 w-full py-3 font-bold text-white uppercase rounded-full shadow-sm cursor-pointer px-7 bg-dashboard-500 hover:bg-dashboard-600 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
+                    >
+                        <span wire:loading.remove wire:target="login">Login</span>
+                        <span wire:loading wire:target="login" class="inline-flex items-center justify-center gap-2">
+                            <span class="h-5 w-5 rounded-full border-2 border-white border-t-transparent animate-spin"
+                                role="status" aria-hidden="true"></span>
+                            Wir melden dich an …
+                        </span>
+                    </button>
                 </div>
             </form>
 
             @if (config('componist_auth.features.resetPasswords'))
                 <div class="text-center mt-7">
-                    <a
-                        href="{{ route('componist.auth.password.request') }}"class="font-bold cursor-pointer text-slate-400 hover:text-slate-600">Passwort
-                        vergessen</a>
+                    <a href="{{ route('componist.auth.password.request') }}"
+                        class="font-bold cursor-pointer text-slate-400 hover:text-slate-600">Passwort vergessen</a>
                 </div>
             @endif
         </div>

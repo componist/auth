@@ -8,21 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasColumn('users', 'two_factor_code')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            $table->string('two_factor_code', 64)->nullable();
-            $table->timestamp('two_factor_expires_at')->nullable();
-            $table->timestamp('last_login')->nullable();
+            $table->string('two_factor_code', 64)->nullable()->change();
         });
     }
 
     public function down(): void
     {
+        if (! Schema::hasColumn('users', 'two_factor_code')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn([
-                'two_factor_code',
-                'two_factor_expires_at',
-                'last_login',
-            ]);
+            $table->unsignedInteger('two_factor_code')->nullable()->change();
         });
     }
 };

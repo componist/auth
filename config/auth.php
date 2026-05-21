@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Componist\Core\View\Components\GuestLayout;
+
 return [
 
     /*
@@ -8,44 +11,50 @@ return [
     |--------------------------------------------------------------------------
      */
 
-    'verification' => false,
+    'verification' => (bool) env('COMPONIST_AUTH_VERIFICATION', false),
+
     /*
     |--------------------------------------------------------------------------
     | Two Faktor Auth
     |--------------------------------------------------------------------------
      */
-    'two-factor' => false,
+    'two-factor' => (bool) env('COMPONIST_AUTH_TWO_FACTOR', false),
+
     /*
     |--------------------------------------------------------------------------
     | Home Path
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure the path where users will get redirected during
-    | authentication or password reset when the operations are successful
-    | and the user is authenticated. You are free to change this value.
-    |
-    */
+     */
     'home' => 'dashboard.index',
+
     /*
     |--------------------------------------------------------------------------
     | Layout Frontend for Auth views
     |--------------------------------------------------------------------------
      */
-    'layouts-app' => Componist\Core\View\Components\GuestLayout::class,
+    'layouts-app' => GuestLayout::class,
 
-    'features' => [
-        'register' => true,
-        'resetPasswords' => true,
-    ],
     /*
     |--------------------------------------------------------------------------
-    | Login for Examples Demos
+    | User Model
+    |--------------------------------------------------------------------------
+     */
+    'user_model' => User::class,
+
+    'features' => [
+        'register' => (bool) env('COMPONIST_AUTH_REGISTER', env('APP_ENV') !== 'production'),
+        'resetPasswords' => (bool) env('COMPONIST_AUTH_RESET_PASSWORDS', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login for Examples Demos (never set credentials in production)
     |--------------------------------------------------------------------------
      */
     'login' => [
         'example' => [
             'email' => null,
             'password' => null,
-        ]
+        ],
     ],
 ];

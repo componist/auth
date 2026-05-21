@@ -1,7 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Livewire\Auth;
 
+use Componist\Auth\Livewire\Concerns\RendersAuthView;
+use Componist\Auth\Support\AuthView;
+use Componist\Auth\Support\AuthenticatedUser;
+use Componist\Auth\Support\ComponistAuthConfig;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -12,86 +19,97 @@ use Livewire\Component;
 
 class UserLoginController extends Component
 {
-    #[Validate('required|email|min:5')]
+    use RendersAuthView;
+    #[Validate('required|email|max:255')]
     public string $email = '';
 
-    #[Validate('required|string|min:8')]
+    #[Validate('required|string|min:8|max:255')]
     public string $password = '';
 
     public bool $remember = false;
 
-    public function mount()
+    public function mount(): void
     {
-        $examplEmail = config('componist_auth.login.example.email');
-        $examplPassword = config('componist_auth.login.example.password');
-
         if (Auth::check()) {
-            return redirect()->route(config('componist_auth.home'));
+            $this->redirect(route(ComponistAuthConfig::homeRoute()), navigate: true);
+
+            return;
         }
 
-        if($examplEmail && $examplPassword){
-           $this->email = $examplEmail;
-           $this->password = $examplPassword;
+        if (! app()->environment('production')) {
+            $exampleEmail = config('componist_auth.login.example.email');
+            $examplePassword = config('componist_auth.login.example.password');
+
+            if (is_string($exampleEmail) && $exampleEmail !== '' && is_string($examplePassword) && $examplePassword !== '') {
+                $this->email = $exampleEmail;
+                $this->password = $examplePassword;
+            }
         }
     }
 
     #[Title('Login')]
-    public function render()
+    public function render(): View
     {
-        return view('componistAuth::livewire.auth.login')
-            ->extends(config('componist_auth.layouts-app'))
-            ->section('content');
+        return $this->authView(AuthView::Login);
     }
 
-    public function login()
+    public function login(): void
     {
         $this->ensureIsNotRateLimited();
 
-        $validate = $this->validate();
+        /** @var array{email: string, password: string} $credentials */
+        $credentials = $this->validate();
 
-        if (Auth::attempt($validate, $this->remember)) {
-            RateLimiter::clear($this->throttleKey());
+        if (! Auth::attempt(
+            ['email' => $credentials['email'], 'password' => $credentials['password']],
+            $this->remember
+        )) {
+            RateLimiter::hit($this->throttleKey(), 1800);
 
-            if (config('componist_auth.verification')) {
-                if (! Auth::user()->hasVerifiedEmail()) {
-                    Auth::user()->sendEmailVerificationNotification();
-
-                    return redirect()->route('componist.auth.verification.notice');
-                }
-            }
-
-            if (config('componist_auth.two-factor')) {
-                Auth::user()->generateTwoFactorCode();
-
-                return redirect()->route('componist.auth.twoFactorAuth');
-            }
-
-            session()->regenerate();
-
-            return redirect()->route(config('componist_auth.home'));
+            throw ValidationException::withMessages([
+                'email' => 'Ungültige Zugangsdaten.',
+            ]);
         }
 
-        RateLimiter::hit($this->throttleKey(), 1800); // 30 Min.
+        RateLimiter::clear($this->throttleKey());
+        session()->regenerate();
 
-        throw ValidationException::withMessages([
-            'email' => 'Ungültige Zugangsdaten.',
-        ]);
-    }
+        $user = AuthenticatedUser::twoFactor();
 
-    protected function ensureIsNotRateLimited()
-    {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 3)) {
+        if (ComponistAuthConfig::verificationEnabled() && ! $user->hasVerifiedEmail()) {
+            $user->sendEmailVerificationNotification();
+
+            $this->redirect(route('componist.auth.verification.notice'), navigate: true);
+
             return;
         }
 
+        if (ComponistAuthConfig::twoFactorEnabled()) {
+            $user->generateTwoFactorCode();
+
+            $this->redirect(route('componist.auth.twoFactorAuth'), navigate: true);
+
+            return;
+        }
+
+        $this->redirect(route(ComponistAuthConfig::homeRoute()), navigate: true);
+    }
+
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
         throw ValidationException::withMessages([
-            // 'email' => 'Zu viele Versuche. Bitte warte '.RateLimiter::availableIn($this->throttleKey()).' Sekunden.',
-            'email' => 'Zu viele Versuche. Bitte warte 30 Minuten und versuchen Sie es erneut.',
+            'email' => "Zu viele Versuche. Bitte warte {$seconds} Sekunden.",
         ]);
     }
 
     protected function throttleKey(): string
     {
-        return Str::lower($this->email).'|'.request()->ip();
+        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
     }
 }

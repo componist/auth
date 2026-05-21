@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Middleware;
 
 use Closure;
+use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,18 +13,21 @@ use Symfony\Component\HttpFoundation\Response;
 class VerifyEmailMiddleware
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  \Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // nicht angemeldet
-        if (Auth::check() === false) {
+        if (! ComponistAuthConfig::verificationEnabled()) {
+            return $next($request);
+        }
+
+        if (! Auth::check()) {
             return redirect()->route('componist.auth.login');
         }
-        // mail ist noch nicht bestätigt
-        if (Auth::user()->email_verified_at === null) {
+
+        $user = Auth::user();
+
+        if ($user !== null && $user->email_verified_at === null) {
             return redirect()->route('componist.auth.verification.notice');
         }
 

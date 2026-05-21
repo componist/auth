@@ -1,25 +1,66 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Traits;
 
+use Componist\Auth\Contracts\TwoFactorAuthenticatable;
 use Componist\Auth\Notifications\TwoFactorCode;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 
 trait AddComponistAuthentication
 {
-    public function generateTwoFactorCode()
+    public function generateTwoFactorCode(): void
     {
-        $this->two_factor_code = rand(100000, 999999);
-        $this->two_factor_expires_at = now()->addMinutes(10);
-        $this->save();
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        Notification::send($this, new TwoFactorCode($this));
+        $this->forceFill([
+            'two_factor_code' => self::hashTwoFactorCode($code),
+            'two_factor_expires_at' => now()->addMinutes(10),
+        ])->save();
+
+        if (! $this instanceof TwoFactorAuthenticatable) {
+            return;
+        }
+
+        Notification::send($this, new TwoFactorCode($this, $code));
     }
 
-    public function resetTwoFactorCode()
+    public function resetTwoFactorCode(): void
     {
-        $this->two_factor_code = null;
-        $this->two_factor_expires_at = null;
-        $this->save();
+        $this->forceFill([
+            'two_factor_code' => null,
+            'two_factor_expires_at' => null,
+        ])->save();
+    }
+
+    public static function hashTwoFactorCode(string $code): string
+    {
+        return hash('sha256', $code);
+    }
+
+    public static function verifyTwoFactorCode(Model $user, string $code): bool
+    {
+        $stored = $user->getAttribute('two_factor_code');
+
+        if (! is_string($stored) || $stored === '') {
+            return false;
+        }
+
+        return hash_equals($stored, self::hashTwoFactorCode($code));
+    }
+
+    public static function twoFactorExpiresAt(Model $user): ?Carbon
+    {
+        $expiresAt = $user->getAttribute('two_factor_expires_at');
+
+        return $expiresAt instanceof Carbon ? $expiresAt : null;
+    }
+
+    protected function initializeAddComponistAuthentication(): void
+    {
+        $this->casts['two_factor_expires_at'] = 'datetime';
     }
 }

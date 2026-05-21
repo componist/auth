@@ -1,70 +1,105 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Livewire\Auth;
 
-use App\Models\User;
+use Componist\Auth\Contracts\TwoFactorAuthenticatable;
+use Componist\Auth\Livewire\Concerns\RendersAuthView;
+use Componist\Auth\Support\AuthView;
+use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class UserRegisterController extends Component
 {
-    #[Validate('required|string|min:5')]
+    use RendersAuthView;
     public string $name = '';
 
-    #[Validate('required|email|min:5')]
     public string $email = '';
 
-    #[Validate('required|string|confirmed|min:8')]
     public string $password = '';
 
-    #[Validate('required|string|min:8')]
     public string $password_confirmation = '';
 
-    public function mount()
+    public function mount(): void
     {
+        if (! ComponistAuthConfig::registerEnabled()) {
+            abort(404);
+        }
+
         if (Auth::check()) {
-            return redirect()->route(config('componist_auth.home'));
+            $this->redirect(route(ComponistAuthConfig::homeRoute()), navigate: true);
         }
     }
 
     #[Title('Account anlegen')]
-    public function render()
+    public function render(): View
     {
-        return view('componistAuth::livewire.auth.register')
-            ->extends(config('componist_auth.layouts-app'))
-            ->section('content');
+        return $this->authView(AuthView::Register);
     }
 
-    public function register()
+    public function register(): void
     {
-        $validated = Validator::make([
-            'name' => $this->name,
-            'email' => $this->email,
-            'password' => $this->password,
-            'password_confirmation' => $this->password_confirmation,
-        ], [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-        ])->validate();
+        $this->ensureIsNotRateLimited();
+        RateLimiter::hit($this->throttleKey(), 60);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+        /** @var array{name: string, email: string, password: string} $validated */
+        $validated = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
         ]);
 
-        event(new Registered($user)); // Für E-Mail-Bestätigung
+        $userModel = ComponistAuthConfig::userModel();
 
-        auth()->login($user);
+        /** @var Authenticatable&TwoFactorAuthenticatable $user */
+        $user = $userModel::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+        ]);
 
-        session()->flash('status', 'Bestätigungs-E-Mail wurde gesendet.');
+        event(new Registered($user));
 
-        return redirect()->route('componist.auth.verification.notice');
+        Auth::login($user);
+        session()->regenerate();
+
+        RateLimiter::clear($this->throttleKey());
+
+        if (ComponistAuthConfig::verificationEnabled()) {
+            $user->sendEmailVerificationNotification();
+
+            $this->redirect(route('componist.auth.verification.notice'), navigate: true);
+
+            return;
+        }
+
+        $this->redirect(route(ComponistAuthConfig::homeRoute()), navigate: true);
+    }
+
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => "Zu viele Versuche. Bitte warte {$seconds} Sekunden.",
+        ]);
+    }
+
+    protected function throttleKey(): string
+    {
+        return Str::transliterate('register|'.request()->ip());
     }
 }

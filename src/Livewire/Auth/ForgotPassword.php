@@ -1,40 +1,75 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Livewire\Auth;
 
+use Componist\Auth\Livewire\Concerns\RendersAuthView;
+use Componist\Auth\Support\AuthView;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class ForgotPassword extends Component
 {
-    #[Validate('required|email|min:5')]
+    use RendersAuthView;
+
+    public const RESET_LINK_SENT_MESSAGE = 'Wenn diese E-Mail-Adresse bei uns registriert ist, erhältst du in Kürze einen Link zum Zurücksetzen deines Passworts.';
+
+    #[Validate('required|email|max:255')]
     public string $email = '';
 
     public ?string $status = null;
 
-    #[Title('Passwort reset')]
-    public function render()
+    public function mount(): void
     {
-        return view('componistAuth::livewire.auth.forgot-password')
-            ->extends(config('componist_auth.layouts-app'))
-            ->section('content');
+        if (! config('componist_auth.features.resetPasswords', true)) {
+            abort(404);
+        }
     }
 
-    public function sendResetLink()
+    #[Title('Passwort reset')]
+    public function render(): View
     {
-        $validate = $this->validate(['email' => 'required|email']);
+        return $this->authView(AuthView::ForgotPassword);
+    }
 
-        $status = Password::sendResetLink(['email' => $validate['email'], function () {
-            return redirect()->route('componist.auth.password.reset');
-        }]);
+    public function sendResetLink(): void
+    {
+        $this->ensureIsNotRateLimited();
 
-        $this->status = __($status);
+        /** @var array{email: string} $validated */
+        $validated = $this->validate();
 
-        if ($status !== Password::RESET_LINK_SENT) {
-            $this->email = '';
-            $this->addError('email', __($status));
+        Password::sendResetLink([
+            'email' => $validated['email'],
+        ]);
+
+        RateLimiter::hit($this->throttleKey(), 60);
+
+        $this->status = self::RESET_LINK_SENT_MESSAGE;
+    }
+
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
         }
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => "Zu viele Versuche. Bitte warte {$seconds} Sekunden.",
+        ]);
+    }
+
+    protected function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
     }
 }

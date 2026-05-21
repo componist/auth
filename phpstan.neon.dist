@@ -1,6 +1,13 @@
+includes:
+    - ../../../vendor/larastan/larastan/extension.neon
+
 parameters:
     level: max
     paths:
         - src
+        - phpstan
 
     reportUnmatchedIgnoredErrors: true
+
+    bootstrapFiles:
+        - phpstan-bootstrap.php

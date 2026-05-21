@@ -1,20 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\Auth\Livewire\Auth;
 
-use Illuminate\Support\Facades\Hash;
+use Componist\Auth\Livewire\Concerns\RendersAuthView;
+use Componist\Auth\Support\AuthView;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Request;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class ResetPassword extends Component
 {
-    #[Validate('required|email|min:5')]
+    use RendersAuthView;
+
     public string $email = '';
 
-    #[Validate('required|string|confirmed|min:8')]
     public string $password = '';
 
     public string $password_confirmation = '';
@@ -23,25 +27,31 @@ class ResetPassword extends Component
 
     public ?string $status = null;
 
-    public function mount()
+    public function mount(?string $token = null): void
     {
-        $this->email = Request::query('email', '');
-        $this->token = Request::route('token');
+        if (! config('componist_auth.features.resetPasswords', true)) {
+            abort(404);
+        }
+
+        $email = Request::query('email', '');
+        $this->email = is_string($email) ? $email : '';
+
+        $routeToken = Request::route('token');
+        $this->token = $token ?? (is_string($routeToken) ? $routeToken : '');
     }
 
     #[Title('Neues Passwort festlegen')]
-    public function render()
+    public function render(): View
     {
-        return view('componistAuth::livewire.auth.reset-password')
-            ->extends(config('componist_auth.layouts-app'))
-            ->section('content');
+        return $this->authView(AuthView::ResetPassword);
     }
 
-    public function resetPassword()
+    public function resetPassword(): void
     {
         $this->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:8|confirmed',
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
+            'token' => ['required', 'string'],
         ]);
 
         $status = Password::reset(
@@ -51,15 +61,23 @@ class ResetPassword extends Component
                 'password_confirmation' => $this->password_confirmation,
                 'token' => $this->token,
             ],
-            function ($user) {
+            function (Model $user): void {
                 $user->forceFill([
-                    'password' => Hash::make($this->password),
+                    'password' => $this->password,
                 ])->save();
             }
         );
 
-        if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('componist.auth.login')->with('status', __($status));
+        if ($status === Password::PASSWORD_RESET) {
+            $this->redirect(route('componist.auth.login'), navigate: true);
+
+            return;
+        }
+
+        if (! is_string($status)) {
+            $this->addError('email', 'Passwort konnte nicht zurückgesetzt werden.');
+
+            return;
         }
 
         $this->addError('email', __($status));

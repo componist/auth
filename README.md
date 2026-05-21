@@ -264,6 +264,8 @@ class Authenticate extends Middleware
     {
         return in_array($request->route()?->getName(), [
             'componist.auth.logout',
+            'verification.notice',
+            'verification.verify',
             'componist.auth.verification.notice',
             'componist.auth.verification.verify',
             'componist.auth.twoFactorAuth',
@@ -344,8 +346,8 @@ Alle Auth-Routen laufen in der `web`-Middleware-Gruppe (vom `AuthServiceProvider
 | GET | `/reset-password/{token}` | `password.reset` (Alias: `componist.auth.password.reset`) | `guest` | Neues Passwort setzen — URL in Reset-E-Mails |
 | GET | `/register` | `componist.auth.register` | `guest` | Registrierung (404 wenn deaktiviert) |
 | GET/POST | `/logout` | `componist.auth.logout` | `auth` | Abmelden (Session invalidieren, Redirect Login) |
-| GET | `/email/verify` | `componist.auth.verification.notice` | `auth` | Hinweis „E-Mail bestätigen“ |
-| GET | `/email/verify/{id}/{hash}` | `componist.auth.verification.verify` | `auth`, `signed`, `throttle:6,1` | Link aus E-Mail |
+| GET | `/email/verify` | `verification.notice` (Alias: `componist.auth.verification.notice`) | `auth` | Hinweis „E-Mail bestätigen“ |
+| GET | `/email/verify/{id}/{hash}` | `verification.verify` (Alias: `componist.auth.verification.verify`) | `auth`, `signed`, `throttle:6,1` | Link aus Verifizierungs-E-Mail |
 | GET | `/two-factor-auth` | `componist.auth.twoFactorAuth` | `auth` | 2FA-Code eingeben |
 
 ### Logout in Blade
@@ -369,8 +371,10 @@ Oder die Package-Komponente:
 | `/login` | `login` | `componist.auth.login` |
 | `/forgot-password` | `password.request` | `componist.auth.password.request` |
 | `/reset-password/{token}` | `password.reset` | `componist.auth.password.reset` |
+| `/email/verify` | `verification.notice` | `componist.auth.verification.notice` |
+| `/email/verify/{id}/{hash}` | `verification.verify` | `componist.auth.verification.verify` |
 
-Die Reset-E-Mail (`Illuminate\Auth\Notifications\ResetPassword`) verwendet `route('password.reset', …)` — dafür muss der primäre Name `password.reset` existieren.
+Laravel-Notifications und `EnsureEmailIsVerified` erwarten die Standardnamen `password.reset`, `verification.notice` und `verification.verify`.
 
 Aliase werden über `ComponistAuthRouteAliases` und `URL::resolveMissingNamedRoutesUsing()` aufgelöst.
 

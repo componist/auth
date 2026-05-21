@@ -134,7 +134,7 @@ class UserLoginControllerTest extends TestCase
             ->set('email', $user->email)
             ->set('password', 'password')
             ->call('login')
-            ->assertRedirect(route('componist.auth.verification.notice'));
+            ->assertRedirect(route('verification.notice'));
     }
 
     public function test_remember_me_is_passed_to_auth_attempt(): void

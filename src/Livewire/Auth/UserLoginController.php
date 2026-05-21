@@ -79,7 +79,7 @@ class UserLoginController extends Component
         if (ComponistAuthConfig::verificationEnabled() && ! $user->hasVerifiedEmail()) {
             $user->sendEmailVerificationNotification();
 
-            $this->redirect(route('componist.auth.verification.notice'), navigate: true);
+            $this->redirect(route('verification.notice'), navigate: true);
 
             return;
         }

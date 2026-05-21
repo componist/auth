@@ -77,7 +77,7 @@ class UserRegisterController extends Component
         if (ComponistAuthConfig::verificationEnabled()) {
             $user->sendEmailVerificationNotification();
 
-            $this->redirect(route('componist.auth.verification.notice'), navigate: true);
+            $this->redirect(route('verification.notice'), navigate: true);
 
             return;
         }

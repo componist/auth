@@ -80,7 +80,7 @@ class UserRegisterControllerTest extends TestCase
             ->set('password', 'password123')
             ->set('password_confirmation', 'password123')
             ->call('register')
-            ->assertRedirect(route('componist.auth.verification.notice'));
+            ->assertRedirect(route('verification.notice'));
     }
 
     public function test_register_returns_404_when_feature_disabled(): void

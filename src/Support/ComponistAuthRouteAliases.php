@@ -17,6 +17,8 @@ final class ComponistAuthRouteAliases
         'componist.auth.login' => 'login',
         'componist.auth.password.request' => 'password.request',
         'componist.auth.password.reset' => 'password.reset',
+        'componist.auth.verification.notice' => 'verification.notice',
+        'componist.auth.verification.verify' => 'verification.verify',
     ];
 
     /**

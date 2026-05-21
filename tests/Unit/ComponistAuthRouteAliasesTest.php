@@ -14,6 +14,14 @@ class ComponistAuthRouteAliasesTest extends TestCase
         $this->assertSame(route('login'), ComponistAuthRouteAliases::resolve('componist.auth.login', [], true));
     }
 
+    public function test_legacy_verification_notice_alias_resolves_to_verification_notice_route(): void
+    {
+        $this->assertSame(
+            route('verification.notice'),
+            ComponistAuthRouteAliases::resolve('componist.auth.verification.notice', [], true),
+        );
+    }
+
     public function test_unknown_route_name_returns_null(): void
     {
         $this->assertNull(ComponistAuthRouteAliases::resolve('unknown.route', [], true));

@@ -38,6 +38,6 @@ class VerifyEmailMiddlewareTest extends TestCase
 
         $response = $middleware->handle($request, fn () => new Response('OK'));
 
-        $this->assertTrue($response->isRedirect(route('componist.auth.verification.notice')));
+        $this->assertTrue($response->isRedirect(route('verification.notice')));
     }
 }

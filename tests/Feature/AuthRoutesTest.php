@@ -91,11 +91,16 @@ class AuthRoutesTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
+    public function test_verification_notice_route_is_available_under_laravel_and_legacy_names(): void
+    {
+        $this->assertSame(route('verification.notice'), route('componist.auth.verification.notice'));
+    }
+
     public function test_verification_notice_requires_authentication(): void
     {
         $this->enableVerification();
 
-        $this->get(route('componist.auth.verification.notice'))
+        $this->get(route('verification.notice'))
             ->assertRedirect(route('login'));
     }
 }

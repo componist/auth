@@ -40,7 +40,7 @@ class AppAuthenticateMiddlewareTest extends TestCase
         $this->actingAs($user);
 
         $this->get(route('dashboard.index'))
-            ->assertRedirect(route('componist.auth.verification.notice'));
+            ->assertRedirect(route('verification.notice'));
     }
 
     public function test_logout_is_allowed_without_completing_two_factor(): void

@@ -34,7 +34,7 @@ Livewire-basiertes Authentifizierungs-Package für Laravel-Anwendungen. Es liefe
 | **Passwort zurücksetzen** | Token-basierter Reset via Livewire |
 | **E-Mail-Verifizierung** | Optional; Laravel `MustVerifyEmail` + signierte Verify-Route |
 | **2FA (E-Mail-OTP)** | 6-stelliger Code per E-Mail, SHA-256-Hash in der DB, 10 Min. Gültigkeit |
-| **Logout** | Nur per `POST`, Session invalidieren + CSRF-Token erneuern |
+| **Logout** | Per `GET` oder `POST` unter `/logout`, Session invalidieren + CSRF-Token erneuern |
 | **Rate-Limiting** | Login, Register, Forgot Password, 2FA, Verify |
 | **Feature-Flags** | Register, Reset, Verification, 2FA unabhängig schaltbar |
 | **Views** | Publishbar; Vendor-Overrides unter `resources/views/vendor/componistAuth` |
@@ -260,7 +260,6 @@ class Authenticate extends Middleware
     {
         return in_array($request->route()?->getName(), [
             'componist.auth.logout',
-            'componist.auth.logout.show',
             'componist.auth.verification.notice',
             'componist.auth.verification.verify',
             'componist.auth.twoFactorAuth',
@@ -269,7 +268,7 @@ class Authenticate extends Middleware
 }
 ```
 
-Diese Ausnahmen erlauben Logout (inkl. Bestätigungsseite), Verify- und 2FA-Seiten auch dann, wenn 2FA noch aussteht oder die E-Mail noch nicht verifiziert ist.
+Diese Ausnahmen erlauben Logout, Verify- und 2FA-Seiten auch dann, wenn 2FA noch aussteht oder die E-Mail noch nicht verifiziert ist.
 
 ### 2. `bootstrap/app.php`
 
@@ -327,8 +326,7 @@ Alle Routen tragen das Namenspräfix `componist.auth.` und laufen in der `web`-M
 | GET | `/register` | `componist.auth.register` | `guest` | Registrierung (404 wenn deaktiviert) |
 | GET | `/forgot-password` | `componist.auth.password.request` | `guest` | Passwort vergessen |
 | GET | `/reset-password/{token}` | `componist.auth.password.reset` | `guest` | Neues Passwort setzen |
-| GET | `/logout` | `componist.auth.logout.show` | `auth` | Logout-Bestätigung (View mit POST-Formular) |
-| POST | `/logout` | `componist.auth.logout` | `auth` | Abmelden (Session invalidieren) |
+| GET/POST | `/logout` | `componist.auth.logout` | `auth` | Abmelden (Session invalidieren, Redirect Login) |
 | GET | `/email/verify` | `componist.auth.verification.notice` | `auth` | Hinweis „E-Mail bestätigen“ |
 | GET | `/email/verify/{id}/{hash}` | `componist.auth.verification.verify` | `auth`, `signed`, `throttle:6,1` | Link aus E-Mail |
 | GET | `/two-factor-auth` | `componist.auth.twoFactorAuth` | `auth` | 2FA-Code eingeben |
@@ -336,11 +334,16 @@ Alle Routen tragen das Namenspräfix `componist.auth.` und laufen in der `web`-M
 ### Logout in Blade
 
 ```blade
-<form method="POST" action="{{ route('componist.auth.logout') }}">
-    @csrf
-    <button type="submit">Abmelden</button>
-</form>
+<a href="{{ route('componist.auth.logout') }}">Abmelden</a>
 ```
+
+Oder die Package-Komponente:
+
+```blade
+<x-componist-auth::logout-form />
+```
+
+`GET` und `POST` sind möglich; für Menü-Links reicht `GET`.
 
 ---
 
@@ -453,7 +456,7 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 | Maßnahme | Umsetzung |
 |----------|-----------|
 | Session-Fixation | `session()->regenerate()` direkt nach `Auth::attempt()` / Register-Login |
-| Logout | POST-only; `session()->invalidate()` + `regenerateToken()` |
+| Logout | `GET`/`POST` `/logout`; `session()->invalidate()` + `regenerateToken()` |
 | 2FA-Speicherung | Nur Hash (SHA-256), kein Klartext in der DB |
 | 2FA-Vergleich | `hash_equals` |
 | 2FA-Zufall | `random_int`, nicht `rand()` |
@@ -485,7 +488,7 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 - [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_SAME_SITE=lax`
 - [ ] Mailer konfiguriert und getestet (2FA + Verify)
 - [ ] Alle geschützten Routen nutzen `middleware(['auth'])`
-- [ ] Logout-Links als POST-Formulare
+- [ ] Logout-Links zeigen auf `route('componist.auth.logout')` (GET reicht)
 
 ---
 

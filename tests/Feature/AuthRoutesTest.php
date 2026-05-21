@@ -27,14 +27,15 @@ class AuthRoutesTest extends TestCase
             ->assertOk();
     }
 
-    public function test_logout_show_page_is_accessible_via_get(): void
+    public function test_logout_logs_user_out_via_get(): void
     {
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('componist.auth.logout.show'))
-            ->assertOk()
-            ->assertSee('Abmelden');
+            ->get(route('componist.auth.logout'))
+            ->assertRedirect(route('componist.auth.login'));
+
+        $this->assertGuest();
     }
 
     public function test_logout_logs_user_out_via_post(): void

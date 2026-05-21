@@ -1,8 +1,8 @@
 <?php
 
+use Componist\Auth\Http\Controllers\LogoutController;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::name('componist.auth.')->group(function () {
@@ -16,18 +16,7 @@ Route::name('componist.auth.')->group(function () {
     });
 
     Route::middleware('auth')->group(function (): void {
-        Route::get('logout', function () {
-            return view('componistAuth::auth.logout');
-        })->name('logout.show');
-
-        Route::post('logout', function () {
-            Auth::guard('web')->logout();
-
-            request()->session()->invalidate();
-            request()->session()->regenerateToken();
-
-            return redirect()->route('componist.auth.login');
-        })->name('logout');
+        Route::match(['get', 'post'], 'logout', LogoutController::class)->name('logout');
     });
 
     Route::middleware('auth')->group(function () {

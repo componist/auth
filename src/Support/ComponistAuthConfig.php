@@ -21,6 +21,11 @@ final class ComponistAuthConfig
         return self::string('componist_auth.routes.login');
     }
 
+    public static function verificationNoticeRoute(): string
+    {
+        return self::string('componist_auth.routes.verification_notice');
+    }
+
     public static function layoutComponent(): string
     {
         return self::string('componist_auth.layouts-app');

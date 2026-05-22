@@ -4,12 +4,157 @@ Livewire-basiertes Authentifizierungs-Package für Laravel-Anwendungen. Es liefe
 
 ---
 
+## Schnellstart (Schritt für Schritt)
+
+### 1. Package installieren
+
+```bash
+composer require componist/auth
+```
+
+Der `AuthServiceProvider` wird per Laravel Package Discovery automatisch geladen.
+
+**Monorepo / lokales Path-Repository:**
+
+```json
+{
+    "repositories": [
+        { "type": "path", "url": "packages/componist/auth" }
+    ],
+    "require": {
+        "componist/auth": "@dev"
+    }
+}
+```
+
+```bash
+composer update componist/auth
+```
+
+### 2. Config publishen (empfohlen)
+
+```bash
+php artisan vendor:publish --tag=componist.auth.publish.config
+```
+
+Erzeugt `config/componist_auth.php`. Ohne Publish gilt die Default-Config aus dem Package.
+
+### 3. Migrationen ausführen
+
+Das Package lädt Migrationen automatisch. Sie erweitern `users` um `two_factor_code`, `two_factor_expires_at` und `last_login`.
+
+```bash
+php artisan migrate
+```
+
+### 4. User-Model anpassen
+
+Trait und Contract einbinden; bei E-Mail-Verifizierung zusätzlich `MustVerifyEmail`:
+
+```php
+use Componist\Auth\Contracts\TwoFactorAuthenticatable;
+use Componist\Auth\Traits\AddComponistAuthentication;
+use Illuminate\Auth\MustVerifyEmail;
+
+class User extends Authenticatable implements TwoFactorAuthenticatable
+{
+    use AddComponistAuthentication, MustVerifyEmail, /* … */;
+
+    protected $hidden = ['password', 'remember_token', 'two_factor_code'];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'two_factor_expires_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+}
+```
+
+Details: [User-Model einrichten](#user-model-einrichten).
+
+### 5. Config & `.env` anpassen
+
+In `config/componist_auth.php` mindestens prüfen:
+
+| Einstellung | Bedeutung |
+|-------------|-----------|
+| `home` | Named Route nach Login (z. B. `dashboard.index`) |
+| `layouts-app` | **Pflicht** — Blade-Layout für Auth-Views ([Layout-Komponente](#layout-komponente-layouts-app)) |
+| `user_model` | Dein `App\Models\User` |
+
+Optional in `.env`:
+
+```env
+COMPONIST_AUTH_VERIFICATION=false
+COMPONIST_AUTH_TWO_FACTOR=false
+COMPONIST_AUTH_REGISTER=true
+COMPONIST_AUTH_RESET_PASSWORDS=true
+```
+
+### 6. `Authenticate`-Middleware in der App
+
+Eigene Middleware anlegen und als `auth`-Alias registrieren, damit Verify- und 2FA-Checks auf allen geschützten Routen laufen:
+
+- `app/Http/Middleware/Authenticate.php` — siehe [Integration](#integration-in-deine-laravel-anwendung)
+- `bootstrap/app.php`: `'auth' => Authenticate::class`
+
+`redirectGuestsTo()` ist **nicht** nötig — das Package setzt Gäste-Redirects auf `route('login')`.
+
+### 7. Geschützte Routen definieren
+
+```php
+Route::middleware(['auth'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard.index');
+});
+```
+
+Auth-Routen (`/login`, `/register`, `/logout`, …) registriert das Package automatisch.
+
+### 8. Views publishen (optional)
+
+Nur nötig, wenn du die UI anpassen willst:
+
+```bash
+php artisan vendor:publish --tag=componist.auth.publish.views
+```
+
+Overrides liegen unter `resources/views/vendor/componistAuth/`.
+
+### 9. Mailer konfigurieren
+
+Für **2FA** und **E-Mail-Verifizierung** muss `MAIL_*` in `.env` korrekt sein und Mails zugestellt werden können.
+
+### 10. Prüfen & loslegen
+
+```bash
+php artisan route:list --name=componist.auth.login
+```
+
+Im Browser: `/login` aufrufen, einloggen, Redirect auf `config('componist_auth.home')`.
+
+**Logout in Blade:**
+
+```blade
+<a href="{{ route('componist.auth.logout') }}">Abmelden</a>
+{{-- oder --}}
+<x-componist-auth::logout-form />
+```
+
+Produktion: [Produktions-Checkliste](#produktions-checkliste).
+
+---
+
 ## Inhaltsverzeichnis
 
+- [Schnellstart (Schritt für Schritt)](#schnellstart-schritt-für-schritt)
 - [Funktionen](#funktionen)
 - [Anforderungen](#anforderungen)
 - [Installation](#installation)
 - [Konfiguration](#konfiguration)
+- [Layout-Komponente (`layouts-app`)](#layout-komponente-layouts-app)
 - [User-Model einrichten](#user-model-einrichten)
 - [Integration in deine Laravel-Anwendung](#integration-in-deine-laravel-anwendung)
 - [Routen](#routen)
@@ -53,63 +198,31 @@ Livewire-basiertes Authentifizierungs-Package für Laravel-Anwendungen. Es liefe
 
 ## Installation
 
-### Composer
+Die vollständige Einrichtung in der empfohlenen Reihenfolge steht im [Schnellstart](#schnellstart-schritt-für-schritt). Kurzüberblick:
 
-```bash
-composer require componist/auth
-```
+| Schritt | Befehl / Aktion |
+|---------|-----------------|
+| Installieren | `composer require componist/auth` |
+| Config | `php artisan vendor:publish --tag=componist.auth.publish.config` |
+| Migrationen | `php artisan migrate` (Spalten siehe Tabelle unten) |
+| Views (optional) | `php artisan vendor:publish --tag=componist.auth.publish.views` |
 
-Der `AuthServiceProvider` wird über Laravel Package Discovery automatisch registriert (`extra.laravel.providers` in der Package-`composer.json`).
+**Publish-Tags:**
 
-### Lokale Entwicklung (Path-Repository)
+| Tag | Ziel |
+|-----|------|
+| `componist.auth.publish.config` | `config/componist_auth.php` |
+| `componist.auth.publish.views` | `resources/views/vendor/componistAuth/…` |
 
-Wenn du das Package aus einem lokalen Verzeichnis einbindest:
+Publizierte Views haben **Vorrang** vor den Package-Views (Namespace `componistAuth`).
 
-```json
-{
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../componist-auth"
-        }
-    ],
-    "require": {
-        "componist/auth": "@dev"
-    }
-}
-```
-
-```bash
-composer update componist/auth
-```
-
-### Datenbank-Migrationen
-
-Das Package lädt Migrationen automatisch. Sie erweitern die `users`-Tabelle um:
+### Migrationen (`users`-Erweiterung)
 
 | Spalte | Typ | Zweck |
 |--------|-----|--------|
 | `two_factor_code` | `string(64)`, nullable | SHA-256-Hash des OTP |
 | `two_factor_expires_at` | `timestamp`, nullable | Ablauf des Codes |
 | `last_login` | `timestamp`, nullable | Letzter Login-Zeitpunkt |
-
-```bash
-php artisan migrate
-```
-
-### Config & Views publishen
-
-```bash
-php artisan vendor:publish --tag=componist.auth.publish.config
-php artisan vendor:publish --tag=componist.auth.publish.views
-```
-
-Danach liegen die Dateien unter:
-
-- `config/componist_auth.php`
-- `resources/views/vendor/componistAuth/…`
-
-Publizierte Views haben **Vorrang** vor den Package-Views (Namespace `componistAuth`).
 
 ---
 
@@ -134,9 +247,10 @@ return [
     'two-factor' => (bool) env('COMPONIST_AUTH_TWO_FACTOR', false),
     'home' => 'dashboard.index', // Named Route nach erfolgreichem Login
     'routes' => [
-        'login' => 'login', // Primärer Routenname (Laravel-Standard)
+        'login' => 'componist.auth.login',
+        'verification_notice' => 'componist.auth.verification.notice',
     ],
-    'layouts-app' => \Componist\Core\View\Components\GuestLayout::class,
+    'layouts-app' => \Componist\Core\View\Components\GuestLayout::class, // Pflicht — siehe Abschnitt unten
     'user_model' => \App\Models\User::class,
     'features' => [
         'register' => (bool) env('COMPONIST_AUTH_REGISTER', env('APP_ENV') !== 'production'),
@@ -157,10 +271,72 @@ return [
 |-----|--------------|
 | `home` | Named Route für Redirects nach Login, Verify, 2FA |
 | `routes.login` | Primärer Routenname für Login und Gäste-Redirects (`ComponistAuthConfig::loginRoute()`) |
-| `layouts-app` | Blade-Layout-Komponente (`@extends` / `section('content')`) |
+| `layouts-app` | **Pflicht** — siehe [Layout-Komponente (`layouts-app`)](#layout-komponente-layouts-app) |
 | `user_model` | Muss `Model`, `Authenticatable` und `TwoFactorAuthenticatable` erfüllen |
 | `features.register` | Bei `false`: Register-Route liefert 404 |
 | `features.resetPasswords` | Bei `false`: Forgot-Password-Route liefert 404 |
+
+### Layout-Komponente (`layouts-app`)
+
+Der Config-Key `layouts-app` ist **verpflichtend**. Alle Auth-Livewire-Seiten (Login, Register, Passwort-Reset, Verify, 2FA) rendern ihre Inhalte über das Trait `RendersAuthView`: Die View wird in dein Layout **eingebettet** (`extends` + Section `content`). Fehlt die Klasse oder liefert das Layout keine Section `content`, schlagen Auth-Seiten mit einem View-Fehler fehl.
+
+#### Standard (Componist Core)
+
+Die Package-Default-Config verweist auf:
+
+```php
+'layouts-app' => \Componist\Core\View\Components\GuestLayout::class,
+```
+
+Dafür muss das Paket **`componist/core`** (bzw. die Klasse `GuestLayout`) in der Host-App verfügbar sein — z. B. per `composer require` oder Path-Repository im Monorepo. Ohne dieses Paket **musst** du eine eigene Layout-Komponente anlegen und in `config/componist_auth.php` eintragen.
+
+#### Eigene Layout-Komponente anlegen
+
+Wenn `GuestLayout` nicht existiert oder du ein anderes Design willst:
+
+1. **Blade-Komponente** erstellen (Namespace an deine App anpassen):
+
+```bash
+php artisan make:component GuestLayout
+```
+
+2. **Layout-View** mit Section `content` — die Auth-Views nutzen explizit `section('content')`:
+
+```blade
+{{-- resources/views/components/guest-layout.blade.php --}}
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? config('app.name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
+</head>
+<body class="antialiased">
+    @yield('content')
+
+    @livewireScripts
+</body>
+</html>
+```
+
+3. **Config** nach dem Publishen anpassen:
+
+```php
+use App\View\Components\GuestLayout;
+
+'layouts-app' => GuestLayout::class,
+```
+
+Die eingetragene Klasse muss eine gültige **Blade-Component-Klasse** sein (`Illuminate\View\Component`), deren View `@yield('content')` (oder äquivalent) bereitstellt. Andere Layout-Stile (nur `$slot` ohne `@yield`) funktionieren mit `RendersAuthView` nicht.
+
+#### Checkliste
+
+- [ ] `config/componist_auth.php` publiziert und `layouts-app` gesetzt
+- [ ] Die eingetragene Klasse existiert und ist autoloadbar
+- [ ] Layout-View enthält `@yield('content')`
+- [ ] Im Browser `/login` lädt ohne View-/Component-Fehler
 
 ---
 
@@ -290,8 +466,8 @@ use App\Http\Middleware\Authenticate;
 
 Der `AuthServiceProvider` übernimmt zusätzlich (ohne Eintrag in `bootstrap/app.php`):
 
-- **Login-Route** `login` (Laravel-Standard, Pfad `/login`, Middleware `guest`)
-- **Legacy-Alias** `componist.auth.login` → gleiche URL (über `URL::resolveMissingNamedRoutesUsing()`)
+- **Login-Route** `componist.auth.login` (Pfad `/login`, Middleware `guest`)
+- **Standard-Alias** `login` → gleiche URL (über `URL::resolveMissingNamedRoutesUsing()`)
 - **Gäste-Redirect** `Authenticate::redirectUsing()` → `route(ComponistAuthConfig::loginRoute())`
 
 Eine `redirectGuestsTo()`-Zeile in `bootstrap/app.php` ist **nicht** nötig. Beide Aufrufe funktionieren in Blade und PHP:
@@ -337,17 +513,17 @@ SESSION_SAME_SITE=lax
 
 ## Routen
 
-Alle Auth-Routen laufen in der `web`-Middleware-Gruppe (vom `AuthServiceProvider` geladen). Die meisten Namen tragen das Präfix `componist.auth.` — **ausnahme:** Login.
+Alle Auth-Routen laufen in der `web`-Middleware-Gruppe (vom `AuthServiceProvider` geladen). **Primär** tragen alle Namen das Präfix `componist.auth.`.
 
 | Methode | Pfad | Route-Name | Middleware | Beschreibung |
 |---------|------|------------|------------|--------------|
-| GET | `/login` | `login` | `guest` | Login-Formular (Livewire) |
-| GET | `/forgot-password` | `password.request` (Alias: `componist.auth.password.request`) | `guest` | Passwort vergessen |
-| GET | `/reset-password/{token}` | `password.reset` (Alias: `componist.auth.password.reset`) | `guest` | Neues Passwort setzen — URL in Reset-E-Mails |
+| GET | `/login` | `componist.auth.login` | `guest` | Login-Formular (Livewire) |
+| GET | `/forgot-password` | `componist.auth.password.request` | `guest` | Passwort vergessen |
+| GET | `/reset-password/{token}` | `componist.auth.password.reset` | `guest` | Neues Passwort setzen — URL in Reset-E-Mails |
 | GET | `/register` | `componist.auth.register` | `guest` | Registrierung (404 wenn deaktiviert) |
 | GET/POST | `/logout` | `componist.auth.logout` | `auth` | Abmelden (Session invalidieren, Redirect Login) |
-| GET | `/email/verify` | `verification.notice` (Alias: `componist.auth.verification.notice`) | `auth` | Hinweis „E-Mail bestätigen“ |
-| GET | `/email/verify/{id}/{hash}` | `verification.verify` (Alias: `componist.auth.verification.verify`) | `auth`, `signed`, `throttle:6,1` | Link aus Verifizierungs-E-Mail |
+| GET | `/email/verify` | `componist.auth.verification.notice` | `auth` | Hinweis „E-Mail bestätigen“ |
+| GET | `/email/verify/{id}/{hash}` | `componist.auth.verification.verify` | `auth`, `signed`, `throttle:6,1` | Link aus Verifizierungs-E-Mail |
 | GET | `/two-factor-auth` | `componist.auth.twoFactorAuth` | `auth` | 2FA-Code eingeben |
 
 ### Logout in Blade
@@ -364,24 +540,22 @@ Oder die Package-Komponente:
 
 `GET` und `POST` sind möglich; für Menü-Links reicht `GET`.
 
-### Laravel-Standard-Routennamen & Legacy-Aliase
+### Laravel-Standard-Routennamen & Aliase
 
-| Pfad | Primärer Name | Legacy-Alias |
-|------|---------------|--------------|
-| `/login` | `login` | `componist.auth.login` |
-| `/forgot-password` | `password.request` | `componist.auth.password.request` |
-| `/reset-password/{token}` | `password.reset` | `componist.auth.password.reset` |
-| `/email/verify` | `verification.notice` | `componist.auth.verification.notice` |
-| `/email/verify/{id}/{hash}` | `verification.verify` | `componist.auth.verification.verify` |
+| Pfad | Primärer Name (Package) | Standard-Alias |
+|------|-------------------------|----------------|
+| `/login` | `componist.auth.login` | `login` |
+| `/forgot-password` | `componist.auth.password.request` | `password.request` |
+| `/reset-password/{token}` | `componist.auth.password.reset` | `password.reset` |
+| `/email/verify` | `componist.auth.verification.notice` | `verification.notice` |
+| `/email/verify/{id}/{hash}` | `componist.auth.verification.verify` | `verification.verify` |
 
-Laravel-Notifications und `EnsureEmailIsVerified` erwarten die Standardnamen `password.reset`, `verification.notice` und `verification.verify`.
+Laravel-Notifications und Host-Code können weiterhin `route('login')`, `route('password.reset')` usw. nutzen — Aliase werden über `ComponistAuthRouteAliases` und `URL::resolveMissingNamedRoutesUsing()` aufgelöst. Passwort- und Verifizierungs-URLs in E-Mails werden zusätzlich über `ResetPassword::createUrlUsing()` bzw. `VerifyEmail::createUrlUsing()` auf Package-Routen gesetzt.
 
-Aliase werden über `ComponistAuthRouteAliases` und `URL::resolveMissingNamedRoutesUsing()` aufgelöst.
-
-Intern nutzt das Package `ComponistAuthConfig::loginRoute()` (Standard: `login`) für Redirects nach Logout, Verify und in der `Authenticate`-Middleware.
+Intern nutzt das Package `ComponistAuthConfig::loginRoute()` (Standard: `componist.auth.login`) für Redirects nach Logout, Verify und in der `Authenticate`-Middleware.
 
 ```bash
-php artisan route:list --name=login
+php artisan route:list --name=componist.auth.login
 ```
 
 ---
@@ -511,14 +685,14 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 | Thema | Verhalten | Sicherheit |
 |-------|-----------|------------|
 | `Authenticate::redirectUsing()` | Setzt global das Redirect-Ziel für nicht authentifizierte Nutzer auf `route(ComponistAuthConfig::loginRoute())` | Kein Open Redirect — nur Named Routes der App |
-| `URL::resolveMissingNamedRoutesUsing()` | Mappt nur fest definierte Paare (`ComponistAuthRouteAliases`: Login + Passwort-Reset) | Kein beliebiges Auflösen fremder Routennamen; Parameter werden an die Zielroute durchgereicht |
+| `URL::resolveMissingNamedRoutesUsing()` | Mappt Laravel-Standardnamen (`login`, `password.reset`, …) auf `componist.auth.*` | Kein beliebiges Auflösen fremder Routennamen; Parameter werden an die Zielroute durchgereicht |
 | Login-Route | Weiterhin `guest`-Middleware | Kein Zugriff für eingeloggte Nutzer auf die Login-Seite (Redirect zu `home`) |
 
 **Hinweise für Host-Apps:**
 
 - Wenn die Anwendung **bereits** einen `resolveMissingNamedRoutesUsing`-Callback nutzt, kann der Package-Callback ihn **ersetzen** (Laravel erlaubt nur einen Resolver). In dem Fall Alias-Logik in der App nachbilden oder nur `route('login')` verwenden.
 - `componist_auth.routes.login` nur auf vertrauenswürdige Named Routes setzen (wie jede Auth-Config).
-- Der frühere Production-Fehler `Route [login] not defined` entstand, wenn Laravel standardmäßig nach `login` suchte, das Package aber nur `componist.auth.login` kannte — behoben durch primären Namen `login` plus Alias.
+- Der frühere Production-Fehler `Route [login] not defined` entstand, wenn Laravel standardmäßig nach `login` suchte, ohne registrierte Route — behoben durch Alias-Resolver (`login` → `componist.auth.login`) und `componist_auth.routes.login`.
 
 ### Bewusst nicht enthalten (Roadmap)
 
@@ -535,10 +709,11 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 - [ ] `COMPONIST_AUTH_REGISTER=false`
 - [ ] `COMPONIST_AUTH_VERIFICATION` / `COMPONIST_AUTH_TWO_FACTOR` bewusst setzen
 - [ ] Keine Demo-Credentials in `componist_auth.login.example`
+- [ ] `layouts-app` zeigt auf eine existierende Layout-Komponente mit `@yield('content')` ([Details](#layout-komponente-layouts-app))
 - [ ] `App\Http\Middleware\Authenticate` registriert (`auth`-Alias in `bootstrap/app.php`)
-- [ ] **Kein** manuelles `redirectGuestsTo()` nötig — Package setzt Redirect auf `login` (prüfen nach Deploy: geschützte URL → Redirect `/login`, kein 500)
+- [ ] **Kein** manuelles `redirectGuestsTo()` nötig — Package setzt Redirect auf `componist.auth.login` (prüfen nach Deploy: geschützte URL → Redirect `/login`, kein 500)
 - [ ] Nach Deploy: `php artisan route:clear` und `php artisan config:clear` (bei Route-/Config-Cache)
-- [ ] `php artisan route:list --name=login` zeigt Route `login` → `/login`
+- [ ] `php artisan route:list --name=componist.auth.login` zeigt Route `componist.auth.login` → `/login`
 - [ ] `URL::forceScheme('https')` in Production
 - [ ] `SESSION_SECURE_COOKIE=true`, `SESSION_SAME_SITE=lax`
 - [ ] Mailer konfiguriert und getestet (2FA + Verify)
@@ -631,7 +806,7 @@ Zentraler Zugriff auf typisierte Config-Werte:
 | Registrierung | Zweck |
 |---------------|--------|
 | `Authenticate::redirectUsing()` | Gäste-Redirect auf `route(loginRoute())` |
-| `URL::resolveMissingNamedRoutesUsing()` | Legacy-Aliase via `ComponistAuthRouteAliases` |
+| `URL::resolveMissingNamedRoutesUsing()` | Standard-Aliase via `ComponistAuthRouteAliases` |
 | Livewire-Komponenten, Middleware-Aliase `verify` / `twofactor` | UI und optionale Einzel-Middleware |
 
 ### `AuthenticatedUser`

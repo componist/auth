@@ -6,27 +6,28 @@ namespace Componist\Auth\Tests\Feature;
 
 use App\Models\User;
 use Componist\Auth\Tests\TestCase;
+use Illuminate\Support\Facades\Password;
 
 class AuthRoutesTest extends TestCase
 {
     public function test_login_route_is_accessible_for_guests(): void
     {
-        $this->get(route('login'))
+        $this->get(route('componist.auth.login'))
             ->assertOk();
     }
 
-    public function test_login_route_is_available_under_legacy_name(): void
+    public function test_standard_login_alias_resolves_to_package_route(): void
     {
         $this->assertSame(route('login'), route('componist.auth.login'));
 
-        $this->get(route('componist.auth.login'))
+        $this->get(route('login'))
             ->assertOk();
     }
 
     public function test_unauthenticated_user_is_redirected_to_login_route(): void
     {
         $this->get(route('dashboard.index'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('componist.auth.login'));
     }
 
     public function test_register_route_is_accessible_when_enabled(): void
@@ -37,18 +38,26 @@ class AuthRoutesTest extends TestCase
 
     public function test_forgot_password_route_is_accessible(): void
     {
-        $this->get(route('password.request'))
+        $this->get(route('componist.auth.password.request'))
             ->assertOk();
     }
 
-    public function test_password_reset_route_is_available_under_laravel_and_legacy_names(): void
+    public function test_standard_forgot_password_alias_resolves_to_package_route(): void
+    {
+        $this->assertSame(
+            route('componist.auth.password.request'),
+            route('password.request'),
+        );
+    }
+
+    public function test_password_reset_route_is_available_under_standard_and_package_names(): void
     {
         $user = $this->createUser();
-        $token = \Illuminate\Support\Facades\Password::createToken($user);
+        $token = Password::createToken($user);
 
         $this->assertSame(
-            route('password.reset', ['token' => $token, 'email' => $user->email]),
             route('componist.auth.password.reset', ['token' => $token, 'email' => $user->email]),
+            route('password.reset', ['token' => $token, 'email' => $user->email]),
         );
     }
 
@@ -58,7 +67,7 @@ class AuthRoutesTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('componist.auth.logout'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('componist.auth.login'));
 
         $this->assertGuest();
     }
@@ -69,7 +78,7 @@ class AuthRoutesTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('componist.auth.logout'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('componist.auth.login'));
 
         $this->assertGuest();
     }
@@ -79,7 +88,7 @@ class AuthRoutesTest extends TestCase
         $user = $this->createUser();
 
         $this->actingAs($user)
-            ->get(route('login'))
+            ->get(route('componist.auth.login'))
             ->assertRedirect(route('dashboard.index'));
     }
 
@@ -88,19 +97,22 @@ class AuthRoutesTest extends TestCase
         $this->enableTwoFactor();
 
         $this->get(route('componist.auth.twoFactorAuth'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('componist.auth.login'));
     }
 
-    public function test_verification_notice_route_is_available_under_laravel_and_legacy_names(): void
+    public function test_verification_notice_route_is_available_under_standard_and_package_names(): void
     {
-        $this->assertSame(route('verification.notice'), route('componist.auth.verification.notice'));
+        $this->assertSame(
+            route('componist.auth.verification.notice'),
+            route('verification.notice'),
+        );
     }
 
     public function test_verification_notice_requires_authentication(): void
     {
         $this->enableVerification();
 
-        $this->get(route('verification.notice'))
-            ->assertRedirect(route('login'));
+        $this->get(route('componist.auth.verification.notice'))
+            ->assertRedirect(route('componist.auth.login'));
     }
 }

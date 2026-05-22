@@ -9,21 +9,29 @@ use Componist\Auth\Tests\TestCase;
 
 class ComponistAuthRouteAliasesTest extends TestCase
 {
-    public function test_legacy_login_alias_resolves_to_login_route(): void
-    {
-        $this->assertSame(route('login'), ComponistAuthRouteAliases::resolve('componist.auth.login', [], true));
-    }
-
-    public function test_legacy_verification_notice_alias_resolves_to_verification_notice_route(): void
+    public function test_standard_login_alias_resolves_to_package_route(): void
     {
         $this->assertSame(
-            route('verification.notice'),
-            ComponistAuthRouteAliases::resolve('componist.auth.verification.notice', [], true),
+            route('componist.auth.login'),
+            ComponistAuthRouteAliases::resolve('login', [], true),
+        );
+    }
+
+    public function test_standard_verification_notice_alias_resolves_to_package_route(): void
+    {
+        $this->assertSame(
+            route('componist.auth.verification.notice'),
+            ComponistAuthRouteAliases::resolve('verification.notice', [], true),
         );
     }
 
     public function test_unknown_route_name_returns_null(): void
     {
         $this->assertNull(ComponistAuthRouteAliases::resolve('unknown.route', [], true));
+    }
+
+    public function test_package_route_name_is_not_resolved_by_alias(): void
+    {
+        $this->assertNull(ComponistAuthRouteAliases::resolve('componist.auth.login', [], true));
     }
 }

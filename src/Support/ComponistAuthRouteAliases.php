@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\Route;
 final class ComponistAuthRouteAliases
 {
     /**
-     * Legacy-Routennamen → primär registrierte Laravel-Standard-Routen.
+     * Laravel-Standard-Routennamen → primär registrierte Package-Routen.
      *
      * @var array<string, string>
      */
-    private const LEGACY_TO_PRIMARY = [
-        'componist.auth.login' => 'login',
-        'componist.auth.password.request' => 'password.request',
-        'componist.auth.password.reset' => 'password.reset',
-        'componist.auth.verification.notice' => 'verification.notice',
-        'componist.auth.verification.verify' => 'verification.verify',
+    private const STANDARD_TO_PACKAGE = [
+        'login' => 'componist.auth.login',
+        'password.request' => 'componist.auth.password.request',
+        'password.reset' => 'componist.auth.password.reset',
+        'verification.notice' => 'componist.auth.verification.notice',
+        'verification.verify' => 'componist.auth.verification.verify',
     ];
 
     /**
@@ -26,7 +26,7 @@ final class ComponistAuthRouteAliases
      */
     public static function resolve(string $name, array $parameters, bool $absolute): ?string
     {
-        $target = self::LEGACY_TO_PRIMARY[$name] ?? null;
+        $target = self::STANDARD_TO_PACKAGE[$name] ?? null;
 
         if ($target === null || ! Route::has($target)) {
             return null;

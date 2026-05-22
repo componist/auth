@@ -33,13 +33,18 @@ return [
     |--------------------------------------------------------------------------
     */
     'routes' => [
-        'login' => 'login',
+        'login' => 'componist.auth.login',
+        'verification_notice' => 'componist.auth.verification.notice',
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Layout Frontend for Auth views
+    | Layout Frontend for Auth views (required)
     |--------------------------------------------------------------------------
+    |
+    | Blade component class used by all auth Livewire pages (section "content").
+    | Must exist in the host app — default: Componist\Core GuestLayout.
+    | See package README: "Layout-Komponente (layouts-app)".
      */
     'layouts-app' => GuestLayout::class,
 

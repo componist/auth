@@ -15,6 +15,10 @@ use Componist\Auth\Middleware\VerifyEmailMiddleware;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Componist\Auth\Support\ComponistAuthRouteAliases;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
@@ -63,6 +67,24 @@ class AuthServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('twofactor', TwoFactorMiddleware::class);
         $router->aliasMiddleware('verify', VerifyEmailMiddleware::class);
+
+        ResetPasswordNotification::createUrlUsing(
+            fn (object $notifiable, string $token): string => route('componist.auth.password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ]),
+        );
+
+        VerifyEmailNotification::createUrlUsing(
+            fn (object $notifiable): string => URL::temporarySignedRoute(
+                'componist.auth.verification.verify',
+                Carbon::now()->addMinutes((int) Config::get('auth.verification.expire', 60)),
+                [
+                    'id' => $notifiable->getKey(),
+                    'hash' => sha1($notifiable->getEmailForVerification()),
+                ],
+            ),
+        );
 
         $this->publishes([
             __DIR__.'/../config/auth.php' => config_path('componist_auth.php'),

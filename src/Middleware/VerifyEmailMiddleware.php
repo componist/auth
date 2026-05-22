@@ -28,7 +28,7 @@ class VerifyEmailMiddleware
         $user = Auth::user();
 
         if ($user !== null && $user->email_verified_at === null) {
-            return redirect()->route('verification.notice');
+            return redirect()->route(ComponistAuthConfig::verificationNoticeRoute());
         }
 
         return $next($request);

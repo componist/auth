@@ -82,7 +82,7 @@ In `config/componist_auth.php` mindestens prüfen:
 | Einstellung | Bedeutung |
 |-------------|-----------|
 | `home` | Named Route nach Login (z. B. `dashboard.index`) |
-| `layouts-app` | **Pflicht** — Blade-Layout für Auth-Views ([Layout-Komponente](#layout-komponente-layouts-app)) |
+| `layouts-app` | **Pflicht** — Layout-View oder Blade-Component für Auth-Views ([`layouts-app`](#layout-layouts-app)) |
 | `user_model` | Dein `App\Models\User` |
 
 Optional in `.env`:
@@ -154,7 +154,7 @@ Produktion: [Produktions-Checkliste](#produktions-checkliste).
 - [Anforderungen](#anforderungen)
 - [Installation](#installation)
 - [Konfiguration](#konfiguration)
-- [Layout-Komponente (`layouts-app`)](#layout-komponente-layouts-app)
+- [Layout (`layouts-app`)](#layout-layouts-app)
 - [User-Model einrichten](#user-model-einrichten)
 - [Integration in deine Laravel-Anwendung](#integration-in-deine-laravel-anwendung)
 - [Routen](#routen)
@@ -179,7 +179,7 @@ Produktion: [Produktions-Checkliste](#produktions-checkliste).
 | **Passwort zurücksetzen** | Token-basierter Reset via Livewire |
 | **E-Mail-Verifizierung** | Optional; Laravel `MustVerifyEmail` + signierte Verify-Route |
 | **2FA (E-Mail-OTP)** | 6-stelliger Code per E-Mail, SHA-256-Hash in der DB, 10 Min. Gültigkeit |
-| **Logout** | Per `GET` oder `POST` unter `/logout`, Session invalidieren + CSRF-Token erneuern |
+| **Logout** | `LogoutController` unter `/logout` (`GET`/`POST`); Session invalidieren + CSRF-Token erneuern; Blade-Komponente `logout-form` (GET-Link) |
 | **Rate-Limiting** | Login, Register, Forgot Password, 2FA, Verify |
 | **Feature-Flags** | Register, Reset, Verification, 2FA unabhängig schaltbar |
 | **Views** | Publishbar; Vendor-Overrides unter `resources/views/vendor/componistAuth` |
@@ -190,7 +190,7 @@ Produktion: [Produktions-Checkliste](#produktions-checkliste).
 
 - PHP 8.2+
 - Laravel 11 oder 12
-- [Livewire](https://livewire.laravel.com/) 3.x oder 4.x
+- [Livewire](https://livewire.laravel.com/) 4.x (`^4.0`, inkl. `Route::livewire()`)
 - Eloquent `users`-Tabelle mit Standard-Laravel-Auth-Feldern
 - Funktionierender Mailer (für 2FA und Verifizierung)
 
@@ -223,6 +223,8 @@ Publizierte Views haben **Vorrang** vor den Package-Views (Namespace `componistA
 | `two_factor_code` | `string(64)`, nullable | SHA-256-Hash des OTP |
 | `two_factor_expires_at` | `timestamp`, nullable | Ablauf des Codes |
 | `last_login` | `timestamp`, nullable | Letzter Login-Zeitpunkt |
+
+Das Package enthält zwei Migrationen: die initiale Erweiterung der `users`-Tabelle und (falls bereits installiert) eine Anpassung des Spaltentyps `two_factor_code` für MySQL (`VARCHAR(64)`).
 
 ---
 
@@ -271,14 +273,15 @@ return [
 |-----|--------------|
 | `home` | Named Route für Redirects nach Login, Verify, 2FA |
 | `routes.login` | Primärer Routenname für Login und Gäste-Redirects (`ComponistAuthConfig::loginRoute()`) |
-| `layouts-app` | **Pflicht** — siehe [Layout-Komponente (`layouts-app`)](#layout-komponente-layouts-app) |
+| `routes.verification_notice` | Routenname für Verify-Hinweis (`ComponistAuthConfig::verificationNoticeRoute()`) |
+| `layouts-app` | **Pflicht** — siehe [Layout (`layouts-app`)](#layout-layouts-app) |
 | `user_model` | Muss `Model`, `Authenticatable` und `TwoFactorAuthenticatable` erfüllen |
 | `features.register` | Bei `false`: Register-Route liefert 404 |
 | `features.resetPasswords` | Bei `false`: Forgot-Password-Route liefert 404 |
 
-### Layout-Komponente (`layouts-app`)
+### Layout (`layouts-app`)
 
-Der Config-Key `layouts-app` ist **verpflichtend**. Alle Auth-Livewire-Seiten (Login, Register, Passwort-Reset, Verify, 2FA) rendern ihre Inhalte über das Trait `RendersAuthView`: Die View wird in dein Layout **eingebettet** (`extends` + Section `content`). Fehlt die Klasse oder liefert das Layout keine Section `content`, schlagen Auth-Seiten mit einem View-Fehler fehl.
+Der Config-Key `layouts-app` ist **verpflichtend**. Alle Auth-Livewire-Seiten (Login, Register, Passwort-Reset, Verify, 2FA) rendern ihre Inhalte über das Trait `RendersAuthView`: Die View wird per `view()->extends(…)` in dein Layout **eingebettet** (Section `content`). Der Wert ist ein **nicht-leerer String** — typischerweise ein **View-Name** (z. B. `layouts.guest`) oder die FQCN einer Blade-Component, deren View `@yield('content')` bereitstellt. Fehlt das Layout oder die Section `content`, schlagen Auth-Seiten mit einem View-Fehler fehl.
 
 #### Standard (Componist Core)
 
@@ -288,19 +291,44 @@ Die Package-Default-Config verweist auf:
 'layouts-app' => \Componist\Core\View\Components\GuestLayout::class,
 ```
 
-Dafür muss das Paket **`componist/core`** (bzw. die Klasse `GuestLayout`) in der Host-App verfügbar sein — z. B. per `composer require` oder Path-Repository im Monorepo. Ohne dieses Paket **musst** du eine eigene Layout-Komponente anlegen und in `config/componist_auth.php` eintragen.
+Dafür muss das Paket **`componist/core`** (bzw. die Klasse `GuestLayout`) in der Host-App verfügbar sein — z. B. per `composer require` oder Path-Repository im Monorepo. Ohne dieses Paket **musst** du ein eigenes Layout eintragen (View-Name oder eigene Component).
 
-#### Eigene Layout-Komponente anlegen
+#### Eigenes Layout anlegen
 
 Wenn `GuestLayout` nicht existiert oder du ein anderes Design willst:
 
-1. **Blade-Komponente** erstellen (Namespace an deine App anpassen):
+**Variante A — Blade-View (empfohlen, einfachste Integration):**
+
+1. Layout-View mit Section `content` anlegen, z. B. `resources/views/layouts/guest.blade.php`:
+
+```blade
+{{-- resources/views/layouts/guest.blade.php --}}
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? config('app.name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
+</head>
+<body class="antialiased">
+    @yield('content')
+
+    @livewireScripts
+</body>
+</html>
+```
+
+2. In der Config: `'layouts-app' => 'layouts.guest'`
+
+**Variante B — Blade-Component:**
 
 ```bash
 php artisan make:component GuestLayout
 ```
 
-2. **Layout-View** mit Section `content` — die Auth-Views nutzen explizit `section('content')`:
+3. **Layout-View** der Component mit Section `content`:
 
 ```blade
 {{-- resources/views/components/guest-layout.blade.php --}}
@@ -321,7 +349,7 @@ php artisan make:component GuestLayout
 </html>
 ```
 
-3. **Config** nach dem Publishen anpassen:
+4. **Config** nach dem Publishen anpassen (Variante B):
 
 ```php
 use App\View\Components\GuestLayout;
@@ -329,12 +357,12 @@ use App\View\Components\GuestLayout;
 'layouts-app' => GuestLayout::class,
 ```
 
-Die eingetragene Klasse muss eine gültige **Blade-Component-Klasse** sein (`Illuminate\View\Component`), deren View `@yield('content')` (oder äquivalent) bereitstellt. Andere Layout-Stile (nur `$slot` ohne `@yield`) funktionieren mit `RendersAuthView` nicht.
+Das Layout **muss** `@yield('content')` bereitstellen. Layouts nur mit `$slot` (ohne `@yield`) funktionieren mit `RendersAuthView` nicht.
 
 #### Checkliste
 
 - [ ] `config/componist_auth.php` publiziert und `layouts-app` gesetzt
-- [ ] Die eingetragene Klasse existiert und ist autoloadbar
+- [ ] Der eingetragene View-Name bzw. die Component existiert und ist auflösbar
 - [ ] Layout-View enthält `@yield('content')`
 - [ ] Im Browser `/login` lädt ohne View-/Component-Fehler
 
@@ -440,8 +468,6 @@ class Authenticate extends Middleware
     {
         return in_array($request->route()?->getName(), [
             'componist.auth.logout',
-            'verification.notice',
-            'verification.verify',
             'componist.auth.verification.notice',
             'componist.auth.verification.verify',
             'componist.auth.twoFactorAuth',
@@ -528,17 +554,19 @@ Alle Auth-Routen laufen in der `web`-Middleware-Gruppe (vom `AuthServiceProvider
 
 ### Logout in Blade
 
+Die Route `/logout` akzeptiert **GET und POST** (`LogoutController`). Für Menü-Links reicht GET:
+
 ```blade
 <a href="{{ route('componist.auth.logout') }}">Abmelden</a>
 ```
 
-Oder die Package-Komponente:
+Oder die Package-Komponente (styled GET-Link, optional Slot für Label):
 
 ```blade
 <x-componist-auth::logout-form />
 ```
 
-`GET` und `POST` sind möglich; für Menü-Links reicht `GET`.
+Für POST (z. B. mit CSRF in einem Formular): `route('componist.auth.logout')` mit `@csrf` und `method="POST"`.
 
 ### Laravel-Standard-Routennamen & Aliase
 
@@ -564,8 +592,8 @@ php artisan route:list --name=componist.auth.login
 
 | Alias | Klasse | Verhalten |
 |-------|--------|-----------|
-| `verify` | `VerifyEmailMiddleware` | Redirect zu `verification.notice`, wenn `verification` aktiv und `email_verified_at` leer |
-| `twofactor` | `TwoFactorMiddleware` | Redirect zu `twoFactorAuth`, wenn `two-factor` aktiv und ein ausstehender Pending-Code (`two_factor_code` gesetzt) existiert — auch nach Ablauf der 10 Minuten |
+| `verify` | `VerifyEmailMiddleware` | Redirect zu `ComponistAuthConfig::verificationNoticeRoute()` (Standard: `componist.auth.verification.notice`), wenn `verification` aktiv und `email_verified_at` leer |
+| `twofactor` | `TwoFactorMiddleware` | Redirect zu `componist.auth.twoFactorAuth`, wenn `two-factor` aktiv und ein ausstehender Pending-Code (`two_factor_code` gesetzt) existiert — auch nach Ablauf der 10 Minuten |
 
 Beide Middleware sind **no-op**, wenn das jeweilige Feature in der Config deaktiviert ist.
 
@@ -614,6 +642,7 @@ flowchart TD
 - Gültigkeit: 10 Minuten (`two_factor_expires_at`)
 - Vergleich: `hash_equals` über `AddComponistAuthentication::verifyTwoFactorCode()`
 - Nach Erfolg: `resetTwoFactorCode()`, Redirect `home`
+- Rate-Limit: 5 Fehlversuche pro User (OTP), 3 Anfragen für „Neuen Code anfordern“
 - **Pending-Sperre:** Solange `two_factor_code` in der DB steht, blockiert `TwoFactorMiddleware` alle geschützten Routen (Redirect zur 2FA-Seite) — unabhängig davon, ob der Code abgelaufen ist. Abgelaufene Codes können nur auf der 2FA-Seite per „Neuen Code anfordern“ erneuert werden; ein Zugriff auf das Dashboard ohne gültigen OTP ist nicht möglich.
 
 **Hinweis:** Es handelt sich um **E-Mail-OTP**, nicht um TOTP (Google Authenticator). Für höchste Sicherheitsanforderungen ist TOTP ein separates Erweiterungsthema.
@@ -641,11 +670,14 @@ resources/views/livewire/auth/
 
 resources/views/emails/
 └── 2fa-code.blade.php
+
+resources/views/components/
+└── logout-form.blade.php
 ```
 
 ### Layout
 
-Alle Auth-Views nutzen `ComponistAuthConfig::layoutComponent()` als Layout (Standard: `GuestLayout`). Das Layout muss eine `content`-Section unterstützen.
+Alle Auth-Views nutzen `ComponistAuthConfig::layoutComponent()` (Config-Key `layouts-app`, Standard: `GuestLayout::class`). Das Layout muss eine `content`-Section (`@yield('content')`) unterstützen.
 
 ### Livewire-Komponenten (intern registriert)
 
@@ -709,7 +741,7 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 - [ ] `COMPONIST_AUTH_REGISTER=false`
 - [ ] `COMPONIST_AUTH_VERIFICATION` / `COMPONIST_AUTH_TWO_FACTOR` bewusst setzen
 - [ ] Keine Demo-Credentials in `componist_auth.login.example`
-- [ ] `layouts-app` zeigt auf eine existierende Layout-Komponente mit `@yield('content')` ([Details](#layout-komponente-layouts-app))
+- [ ] `layouts-app` zeigt auf ein auflösbares Layout mit `@yield('content')` ([Details](#layout-layouts-app))
 - [ ] `App\Http\Middleware\Authenticate` registriert (`auth`-Alias in `bootstrap/app.php`)
 - [ ] **Kein** manuelles `redirectGuestsTo()` nötig — Package setzt Redirect auf `componist.auth.login` (prüfen nach Deploy: geschützte URL → Redirect `/login`, kein 500)
 - [ ] Nach Deploy: `php artisan route:clear` und `php artisan config:clear` (bei Route-/Config-Cache)
@@ -727,7 +759,9 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 
 ### Tests ausführen
 
-Die Tests laufen in einer Laravel-Anwendung, in die das Package eingebunden ist (z. B. über `composer require` oder ein Path-Repository). Aus dem Stammverzeichnis der Anwendung:
+Die Tests laufen **in der Host-Laravel-App**, in die das Package eingebunden ist (Path-Repository oder `vendor/`). Das Package hat keine eigene `phpunit.xml` — `tests/TestCase.php` erweitert die App-Basis.
+
+Aus dem Stammverzeichnis der Anwendung:
 
 ```bash
 php artisan test --compact vendor/componist/auth/tests
@@ -739,13 +773,7 @@ In einem Monorepo mit Path-Repository:
 php artisan test --compact packages/componist/auth/tests
 ```
 
-Alternativ, wenn du das Repository direkt geklont hast und die Tests im Package-Verzeichnis liegen:
-
-```bash
-php artisan test --compact tests
-```
-
-Die Suite umfasst Unit-Tests (Trait, Config) sowie Feature-Tests (Livewire, Routen, Middleware inkl. erweiterter `Authenticate`-Middleware).
+Die Suite umfasst Unit-Tests (Trait, Config, Route-Aliase) sowie Feature-Tests (Livewire, Routen, Middleware inkl. erweiterter `Authenticate`-Middleware der Host-App).
 
 ### PHPStan (Level max)
 
@@ -763,13 +791,15 @@ Entspricht `vendor/bin/phpstan analyse -c phpstan.neon.dist` (Larastan, Level ma
 
 ```
 ├── config/auth.php              # Default-Config (merge als componist_auth)
-├── database/migrations/         # users-Erweiterungen
-├── routes/web.php               # Auth-Routen
-├── resources/views/             # Blade + E-Mail
+├── database/migrations/         # users-Erweiterungen (+ Spaltentyp-Fix)
+├── routes/web.php               # Auth-Routen (Route::livewire)
+├── resources/views/             # Blade, E-Mail, logout-form
 ├── src/
 │   ├── AuthServiceProvider.php
 │   ├── Contracts/
 │   │   └── TwoFactorAuthenticatable.php
+│   ├── Http/Controllers/
+│   │   └── LogoutController.php
 │   ├── Livewire/
 │   │   ├── Auth/                # Livewire-Controller
 │   │   └── Concerns/
@@ -780,9 +810,10 @@ Entspricht `vendor/bin/phpstan analyse -c phpstan.neon.dist` (Larastan, Level ma
 │   ├── Notifications/
 │   │   └── TwoFactorCode.php
 │   ├── Support/
-│   │   ├── AuthView.php         # Enum der View-Namen
+│   │   ├── AuthView.php              # Enum der View-Namen
 │   │   ├── AuthenticatedUser.php
-│   │   └── ComponistAuthConfig.php
+│   │   ├── ComponistAuthConfig.php
+│   │   └── ComponistAuthRouteAliases.php
 │   └── Traits/
 │       └── AddComponistAuthentication.php
 └── tests/
@@ -796,6 +827,8 @@ Zentraler Zugriff auf typisierte Config-Werte:
 |---------|--------------|
 | `homeRoute()` | Named Route nach Login / Verify / 2FA |
 | `loginRoute()` | Named Route für Login und Gäste-Redirects (Config: `routes.login`) |
+| `verificationNoticeRoute()` | Named Route für Verify-Hinweis (Config: `routes.verification_notice`) |
+| `layoutComponent()` | Layout für `RendersAuthView` (Config: `layouts-app`) |
 | `userModel()` | Konfiguriertes User-Model (mit Contract-Prüfung) |
 | `verificationEnabled()` | Feature-Flag E-Mail-Verifizierung |
 | `twoFactorEnabled()` | Feature-Flag E-Mail-OTP |

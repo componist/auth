@@ -1,6 +1,20 @@
 {
     "name": "componist/auth",
-    "keywords": [],
+    "description": "Livewire-based authentication for Laravel. Ready-made UI for login, registration, password reset, email verification, and email-based 2FA, with rate limiting, session hardening, and feature flags.",
+    "keywords": [
+        "laravel",
+        "livewire",
+        "authentication",
+        "auth",
+        "login",
+        "registration",
+        "password-reset",
+        "email-verification",
+        "two-factor",
+        "2fa",
+        "rate-limiting",
+        "session"
+    ],
     "homepage": "",
     "license": "MIT",
     "authors": [

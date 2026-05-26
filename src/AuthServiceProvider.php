@@ -36,10 +36,6 @@ class AuthServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
-        Route::group(['middleware' => ['web']], function (): void {
-            $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
-        });
-
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'componistAuth');
 
         Blade::anonymousComponentPath(__DIR__.'/../resources/views/components', 'componist-auth');
@@ -53,6 +49,10 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Route::group(['middleware' => ['web']], function (): void {
+            $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        });
+
         Authenticate::redirectUsing(
             fn (Request $request): string => route(ComponistAuthConfig::loginRoute()),
         );

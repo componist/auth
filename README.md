@@ -671,13 +671,110 @@ resources/views/livewire/auth/
 resources/views/emails/
 └── 2fa-code.blade.php
 
+resources/css/
+├── auth.css          # optionaler Standalone-Tailwind-Einstieg
+└── auth-theme.css    # Design-System (Klassen, Tokens, Animationen)
+
 resources/views/components/
+├── auth-page.blade.php           # Shell → Card → Heading → Content → Footer
+├── auth-form.blade.php           # Formular-Wrapper
+├── auth-actions.blade.php        # Button-Gruppe
+├── auth-footer.blade.php         # Footer-Links
+├── auth-input / auth-password    # Felder inkl. Fehler (field="…")
+├── auth-otp.blade.php            # 6-stelliger Code
+├── auth-button / auth-button-secondary
+├── auth-alert / auth-callout     # success | error | info
+├── auth-field-error.blade.php
+├── auth-centered / auth-icon-badge
+├── auth-brand.blade.php            # Logo aus Config
 └── logout-form.blade.php
 ```
 
 ### Layout
 
+- **Eine Spalte**, zentrierter Content (`max-width: 28rem`), responsive Padding (`100dvh`).
+- Dunkler Slate-Hintergrund mit dezenten Teal-Verläufen.
+- Kompakte Brand-Zeile (Logo + App-Name) über der Karte.
+
+### Logo (Config)
+
+Logo und Branding werden zentral über `config/componist_auth.php` → `logo` gesteuert (Komponente `auth-brand` in allen Auth-Views via `auth-shell`).
+
+```env
+COMPONIST_AUTH_LOGO_PATH=images/logo.svg
+COMPONIST_AUTH_LOGO_ALT="Meine App"
+COMPONIST_AUTH_LOGO_HREF=/
+COMPONIST_AUTH_LOGO_HEIGHT=2.75rem
+COMPONIST_AUTH_LOGO_SHOW_BRAND_NAME=true
+COMPONIST_AUTH_LOGO_BRAND_NAME=
+```
+
+| Key | Beschreibung |
+|-----|----------------|
+| `path` | Pfad unter `public/` (z. B. `images/logo.svg`) oder absolute URL (`https://…`) |
+| `alt` | Alt-Text für `<img>` (Standard: `APP_NAME`) |
+| `href` | Optionaler Klick-Link: URL, Pfad (`/`) oder Named Route (`componist.auth.login`) |
+| `height` | CSS-Höhe des Logos (Standard: `2.5rem`) |
+| `show_brand_name` | App-Namen unter/neben Logo anzeigen |
+| `brand_name` | Anzeigename überschreiben (sonst `APP_NAME`) |
+
+Ohne `path` wird das Standard-SVG-Icon angezeigt.
+
+### SEO
+
+`auth-page` schreibt per `@push('meta')` ins Guest-Layout:
+
+- `<title>`, `description`, `robots`, `canonical`
+- Open Graph + Twitter Card
+
+Pro Seite `meta-description` setzen. Standard-`robots`: `noindex, nofollow` (Config: `componist_auth.seo.robots` / `COMPONIST_AUTH_SEO_ROBOTS`).
+
+### Einheitliche Seitenstruktur
+
+Jede Auth-View folgt demselben Schema:
+
+```blade
+<x-componist-auth::auth-page
+    title="…"
+    subtitle="…"
+    meta-description="…"
+>
+    <x-componist-auth::auth-form wire:submit="…">
+        <x-componist-auth::auth-input … field="email" />
+        <x-componist-auth::auth-actions>
+            <x-componist-auth::auth-button>…</x-componist-auth::auth-button>
+        </x-componist-auth::auth-actions>
+    </x-componist-auth::auth-form>
+
+    <x-slot:footer>
+        <x-componist-auth::auth-link :href="route('…')">…</x-componist-auth::auth-link>
+    </x-slot:footer>
+</x-componist-auth::auth-page>
+```
+
+### Layout
+
 Alle Auth-Views nutzen `ComponistAuthConfig::layoutComponent()` (Config-Key `layouts-app`, Standard: `GuestLayout::class`). Das Layout muss eine `content`-Section (`@yield('content')`) unterstützen.
+
+### CSS & Frontend (wichtig)
+
+Die Auth-UI nutzt **Tailwind-Klassen** aus den Package-Views. Damit Styles greifen, muss die Host-App:
+
+1. **`guest.css`** (oder `app.css`) um die Package-Views erweitern (Tailwind v4 `@source`):
+
+```css
+@source '../../packages/componist/auth/resources/views/**/*.blade.php';
+/* nach Composer-Install: */
+@source '../../vendor/componist/auth/resources/views/**/*.blade.php';
+
+@import '../../packages/componist/auth/resources/css/auth-theme.css';
+```
+
+2. **`GuestLayout`** muss **`guest.css` + `guest.js`** laden (Alpine für Passwort-Toggle), nicht `app.css` — und `@livewireStyles` / `@livewireScripts` enthalten.
+
+3. Nach Änderungen: `npm run build` oder `npm run dev`.
+
+Optional: `php artisan vendor:publish --tag=componist.auth.publish.assets` und `auth.css` als weiteren Vite-Eintrag, wenn du kein gemeinsames `guest.css` verwendest.
 
 ### Livewire-Komponenten (intern registriert)
 

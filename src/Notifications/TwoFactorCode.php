@@ -49,10 +49,11 @@ class TwoFactorCode extends Notification
 
         return (new MailMessage)
             ->subject('Zwei-Faktor-Code')
-            ->greeting('Hallo '.$name.',')
-            ->line('Dein Zwei-Faktor-Code lautet:')
-            ->line($this->code)
-            ->line('Gültig bis: '.$expiresLabel);
+            ->view('componistAuth::emails.2fa-code', [
+                'name' => $name,
+                'code' => $this->code,
+                'expiresLabel' => $expiresLabel,
+            ]);
     }
 
     /**

@@ -1,0 +1,11 @@
+/**
+ * Standalone Tailwind-Einstieg für Host-Apps ohne guest.css.
+ * Im Monorepo: guest.css importiert auth-theme.css und scannt diese Views.
+ */
+@import 'tailwindcss';
+
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+}

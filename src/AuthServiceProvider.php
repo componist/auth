@@ -94,6 +94,11 @@ class AuthServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth'),
         ], 'componist.auth.publish.views');
 
+        $this->publishes([
+            __DIR__.'/../resources/css/auth.css' => resource_path('css/vendor/componist-auth.css'),
+            __DIR__.'/../resources/css/auth-theme.css' => resource_path('css/vendor/componist-auth-theme.css'),
+        ], 'componist.auth.publish.assets');
+
         $this->app->booted(function (): void {
             URL::resolveMissingNamedRoutesUsing(
                 fn (string $name, array $parameters, bool $absolute): ?string => ComponistAuthRouteAliases::resolve(

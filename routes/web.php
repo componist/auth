@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::name('componist.auth.')->group(function (): void {
     Route::middleware('guest')->group(function (): void {
-        Route::livewire('login', UserLoginController::class)->name('login');
-        Route::livewire('forgot-password', ForgotPassword::class)->name('password.request');
-        Route::livewire('reset-password/{token}', ResetPassword::class)->name('password.reset');
-        Route::livewire('register', UserRegisterController::class)->name('register');
+        Route::get('login', UserLoginController::class)->name('login');
+        Route::get('forgot-password', ForgotPassword::class)->name('password.request');
+        Route::get('reset-password/{token}', ResetPassword::class)->name('password.reset');
+        Route::get('register', UserRegisterController::class)->name('register');
     });
 
     Route::middleware('auth')->group(function (): void {
-        Route::livewire('email/verify', VerifyEmail::class)->name('verification.notice');
+        Route::get('email/verify', VerifyEmail::class)->name('verification.notice');
 
         Route::get('email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
             $request->fulfill();
@@ -30,6 +30,6 @@ Route::name('componist.auth.')->group(function (): void {
 
         Route::match(['get', 'post'], 'logout', LogoutController::class)->name('logout');
 
-        Route::livewire('two-factor-auth', TwoFactorAuthController::class)->name('twoFactorAuth');
+        Route::get('two-factor-auth', TwoFactorAuthController::class)->name('twoFactorAuth');
     });
 });

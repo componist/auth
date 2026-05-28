@@ -19,7 +19,7 @@ use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Contracts\View\Factory as ViewFactory;
+use Illuminate\View\Factory as ViewFactory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Blade;
@@ -54,7 +54,9 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Authenticate::redirectUsing(
-            fn (Request $request): string => route(ComponistAuthConfig::loginRoute()),
+            fn (Request $request): ?string => $request->expectsJson()
+                ? null
+                : route(ComponistAuthConfig::loginRoute()),
         );
 
         Livewire::component('auth.login', UserLoginController::class);
@@ -93,11 +95,6 @@ class AuthServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/componistAuth'),
         ], 'componist.auth.publish.views');
-
-        $this->publishes([
-            __DIR__.'/../resources/css/auth.css' => resource_path('css/vendor/componist-auth.css'),
-            __DIR__.'/../resources/css/auth-theme.css' => resource_path('css/vendor/componist-auth-theme.css'),
-        ], 'componist.auth.publish.assets');
 
         $this->app->booted(function (): void {
             URL::resolveMissingNamedRoutesUsing(

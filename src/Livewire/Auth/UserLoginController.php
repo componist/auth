@@ -8,6 +8,7 @@ use Componist\Auth\Livewire\Concerns\RendersAuthView;
 use Componist\Auth\Support\AuthView;
 use Componist\Auth\Support\AuthenticatedUser;
 use Componist\Auth\Support\ComponistAuthConfig;
+use Componist\Auth\Support\TwoFactorSession;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -47,7 +48,7 @@ class UserLoginController extends Component
         }
     }
 
-    #[Title('Login')]
+    #[Title('Anmelden')]
     public function render(): View
     {
         return $this->authView(AuthView::Login);
@@ -73,6 +74,7 @@ class UserLoginController extends Component
 
         RateLimiter::clear($this->throttleKey());
         session()->regenerate();
+        TwoFactorSession::forget();
 
         $user = AuthenticatedUser::twoFactor();
 

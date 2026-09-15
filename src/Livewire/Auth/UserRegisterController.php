@@ -48,15 +48,26 @@ class UserRegisterController extends Component
 
     public function register(): void
     {
-        $this->ensureIsNotRateLimited();
-        RateLimiter::hit($this->throttleKey(), 60);
+        abort_unless(ComponistAuthConfig::registerEnabled(), 404);
 
-        /** @var array{name: string, email: string, password: string} $validated */
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
-        ]);
+        $this->ensureIsNotRateLimited();
+
+        try {
+            /** @var array{name: string, email: string, password: string} $validated */
+            $validated = $this->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+                'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
+            ]);
+        } catch (ValidationException $e) {
+            if ($this->name !== '' || $this->email !== '' || $this->password !== '') {
+                RateLimiter::hit($this->throttleKey(), 60);
+            }
+
+            throw $e;
+        }
+
+        $this->ensureSuccessfulRegisterIsNotRateLimited();
 
         $userModel = ComponistAuthConfig::userModel();
 
@@ -72,6 +83,7 @@ class UserRegisterController extends Component
         Auth::login($user);
         session()->regenerate();
 
+        RateLimiter::hit($this->successThrottleKey(), 3600);
         RateLimiter::clear($this->throttleKey());
 
         if (ComponistAuthConfig::verificationEnabled()) {
@@ -98,8 +110,26 @@ class UserRegisterController extends Component
         ]);
     }
 
+    protected function ensureSuccessfulRegisterIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->successThrottleKey(), 3)) {
+            return;
+        }
+
+        $seconds = RateLimiter::availableIn($this->successThrottleKey());
+
+        throw ValidationException::withMessages([
+            'email' => "Zu viele neue Konten. Bitte warte {$seconds} Sekunden.",
+        ]);
+    }
+
     protected function throttleKey(): string
     {
         return Str::transliterate('register|'.request()->ip());
+    }
+
+    protected function successThrottleKey(): string
+    {
+        return Str::transliterate('register-success|'.request()->ip());
     }
 }

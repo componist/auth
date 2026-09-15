@@ -3,5 +3,5 @@
 ])
 
 @error($field)
-    <p {{ $attributes->class(['auth-field-error']) }} role="alert">{{ $message }}</p>
+    <p {{ $attributes->class(['text-xs text-red-600 dark:text-red-400']) }} role="alert">{{ $message }}</p>
 @enderror

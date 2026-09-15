@@ -28,7 +28,7 @@ Route::name('componist.auth.')->group(function (): void {
             return redirect()->route(ComponistAuthConfig::homeRoute());
         })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
-        Route::match(['get', 'post'], 'logout', LogoutController::class)->name('logout');
+        Route::post('logout', LogoutController::class)->name('logout');
 
         Route::get('two-factor-auth', TwoFactorAuthController::class)->name('twoFactorAuth');
     });

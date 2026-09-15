@@ -1,6 +1,6 @@
 <x-componist-auth::auth-page
     title="Neues Passwort festlegen"
-    subtitle="Wähle ein sicheres neues Passwort für dein Konto."
+    subtitle="Wähle ein sicheres Passwort für dein Konto."
     meta-description="Neues Passwort für {{ config('app.name') }} festlegen. Gib ein starkes Passwort ein und bestätige es."
 >
     <x-componist-auth::auth-form wire:submit="resetPassword">
@@ -10,6 +10,7 @@
             label="Neues Passwort"
             name="password"
             field="password"
+            placeholder="Mindestens 8 Zeichen"
             wire:model="password"
             autocomplete="new-password"
             required
@@ -19,6 +20,7 @@
             label="Passwort bestätigen"
             name="password_confirmation"
             field="password_confirmation"
+            placeholder="Passwort wiederholen"
             wire:model="password_confirmation"
             autocomplete="new-password"
             required
@@ -32,14 +34,14 @@
                 loading-target="resetPassword"
                 loading-text="Wird gespeichert …"
             >
-                Zurücksetzen
+                Passwort speichern
             </x-componist-auth::auth-button>
         </x-componist-auth::auth-actions>
     </x-componist-auth::auth-form>
 
     <x-slot:footer>
         <x-componist-auth::auth-link :href="route('componist.auth.login')">
-            Zurück zum Login
+            Zurück zur Anmeldung
         </x-componist-auth::auth-link>
     </x-slot:footer>
 </x-componist-auth::auth-page>

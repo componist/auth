@@ -1,6 +1,6 @@
 <x-componist-auth::auth-page
     title="Account anlegen"
-    subtitle="Erstelle ein neues Konto in wenigen Schritten."
+    subtitle="Lege in wenigen Schritten ein neues Konto an."
     meta-description="Registrierung bei {{ config('app.name') }} – erstelle dein Konto mit Name, E-Mail und sicherem Passwort."
 >
     <x-componist-auth::auth-form wire:submit.prevent="register">
@@ -9,6 +9,7 @@
             name="name"
             field="name"
             type="text"
+            placeholder="Dein Name"
             wire:model.live="name"
             autocomplete="name"
             required
@@ -19,6 +20,7 @@
             name="email"
             field="email"
             type="email"
+            placeholder="name@firma.de"
             wire:model.live="email"
             autocomplete="email"
             required
@@ -28,6 +30,7 @@
             label="Passwort"
             name="password"
             field="password"
+            placeholder="Mindestens 8 Zeichen"
             wire:model.live="password"
             autocomplete="new-password"
             required
@@ -38,9 +41,9 @@
                 label="Passwort bestätigen"
                 name="password_confirmation"
                 field="password_confirmation"
+                placeholder="Passwort wiederholen"
                 wire:model.live="password_confirmation"
                 autocomplete="new-password"
-                placeholder="Passwort bestätigen"
                 required
             />
         @endif
@@ -56,8 +59,11 @@
     <x-componist-auth::auth-status />
 
     <x-slot:footer>
-        <x-componist-auth::auth-link :href="route('componist.auth.login')">
-            Bereits registriert? Zum Login
-        </x-componist-auth::auth-link>
+        <p>
+            Bereits registriert?
+            <x-componist-auth::auth-link :href="route('componist.auth.login')" class="text-slate-900 dark:text-white">
+                Anmelden
+            </x-componist-auth::auth-link>
+        </p>
     </x-slot:footer>
 </x-componist-auth::auth-page>

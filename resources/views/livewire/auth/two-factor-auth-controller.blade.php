@@ -3,7 +3,7 @@
     subtitle="Gib den sechsstelligen Code aus deiner E-Mail ein."
     meta-description="Zwei-Faktor-Authentifizierung bei {{ config('app.name') }}. Gib den Sicherheitscode aus deiner E-Mail ein."
 >
-    <x-componist-auth::auth-form>
+    <x-componist-auth::auth-form wire:submit="login">
         <x-componist-auth::auth-otp
             id="2fa_code"
             name="2fa_code"
@@ -19,22 +19,22 @@
         </x-componist-auth::auth-callout>
 
         @if ($loginMessage)
-            <x-componist-auth::auth-alert variant="error" class="text-center">
+            <x-componist-auth::auth-alert
+                :variant="str_contains((string) $loginMessage, 'gesendet') ? 'success' : 'error'"
+                class="text-center"
+            >
                 {{ $loginMessage }}
             </x-componist-auth::auth-alert>
         @endif
 
         <x-componist-auth::auth-actions>
-            @if (strlen((string) $twoFactorAuthCode) >= 6)
-                <x-componist-auth::auth-button
-                    type="button"
-                    wire:click="login"
-                    loading-target="login"
-                    loading-text="Bitte warten …"
-                >
-                    Code bestätigen
-                </x-componist-auth::auth-button>
-            @endif
+            <x-componist-auth::auth-button
+                type="submit"
+                loading-target="login"
+                loading-text="Bitte warten …"
+            >
+                Code bestätigen
+            </x-componist-auth::auth-button>
 
             <x-componist-auth::auth-button-secondary
                 type="button"

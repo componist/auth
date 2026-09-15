@@ -56,7 +56,7 @@ return [
     'user_model' => User::class,
 
     'features' => [
-        'register' => (bool) env('COMPONIST_AUTH_REGISTER', env('APP_ENV') !== 'production'),
+        'register' => (bool) env('COMPONIST_AUTH_REGISTER', false),
         'resetPasswords' => (bool) env('COMPONIST_AUTH_RESET_PASSWORDS', true),
     ],
 

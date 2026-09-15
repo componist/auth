@@ -15,7 +15,7 @@
         "rate-limiting",
         "session"
     ],
-    "homepage": "",
+    "homepage": "https://componist.dev",
     "license": "MIT",
     "authors": [
         {
@@ -25,6 +25,7 @@
         }
     ],
     "require": {
+        "php": "^8.2",
         "livewire/livewire": "^4.0"
     },
     "require-dev": {
@@ -41,7 +42,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Componist\\Auth\\Tests\\": "tests/"
         }
     },
     "extra": {

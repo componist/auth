@@ -11,7 +11,7 @@
 @php
     $appName = config('app.name', 'Laravel');
     $documentTitle = $metaTitle ?? "{$title} · {$appName}";
-    $description = $metaDescription ?? $subtitle ?? "Authentifizierung bei {$appName}.";
+    $description = $metaDescription ?? $subtitle ?? "Anmeldung bei {$appName}.";
     $robotsContent = $robots ?? config('componist_auth.seo.robots', 'noindex, nofollow');
     $canonicalUrl = $canonical ?? url()->current();
     $locale = str_replace('_', '-', app()->getLocale());
@@ -36,12 +36,12 @@
 @endpush
 
 <x-componist-auth::auth-shell :brand="$brand">
-    <x-componist-auth::auth-card heading-id="auth-page-title">
+    <x-componist-auth::auth-card heading-id="auth-page-title" :brand="$brand">
         <x-componist-auth::auth-heading :subtitle="$subtitle" heading-id="auth-page-title">
             {{ $title }}
         </x-componist-auth::auth-heading>
 
-        <div class="auth-page-content">
+        <div class="flex flex-col gap-4">
             {{ $slot }}
         </div>
 

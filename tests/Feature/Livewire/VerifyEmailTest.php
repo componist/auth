@@ -28,7 +28,7 @@ class VerifyEmailTest extends TestCase
         Livewire::actingAs($user)
             ->test(VerifyEmailComponent::class)
             ->assertStatus(200)
-            ->assertSee('Bitte bestätigen Sie Ihre E-Mail-Adresse');
+            ->assertSee('E-Mail bestätigen');
     }
 
     public function test_verified_user_is_redirected_from_notice_page(): void

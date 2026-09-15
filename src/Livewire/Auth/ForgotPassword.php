@@ -33,7 +33,7 @@ class ForgotPassword extends Component
         }
     }
 
-    #[Title('Passwort reset')]
+    #[Title('Passwort zurücksetzen')]
     public function render(): View
     {
         return $this->authView(AuthView::ForgotPassword);

@@ -7,25 +7,34 @@
 @php
     $inputId = $attributes->get('id') ?? $name;
     $errorField = $field ?? $name;
+    $controlClass = 'block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-teal-500';
 @endphp
 
-<div>
-    <label @if ($inputId) for="{{ $inputId }}" @endif class="auth-label">
-        {{ $label }}
-    </label>
+<div class="flex flex-col gap-1.5">
+    <div class="flex items-center justify-between gap-3">
+        <label
+            @if ($inputId) for="{{ $inputId }}" @endif
+            class="text-xs font-medium text-slate-700 dark:text-slate-200"
+        >
+            {{ $label }}
+        </label>
+        @isset($hint)
+            <div class="shrink-0">{{ $hint }}</div>
+        @endisset
+    </div>
 
     <div x-data="{ show: false }" class="relative">
         <input
             @if ($inputId) id="{{ $inputId }}" @endif
             @if ($name) name="{{ $name }}" @endif
             x-bind:type="show ? 'text' : 'password'"
-            {{ $attributes->class(['auth-control pr-11']) }}
+            {{ $attributes->class([$controlClass]) }}
         />
         <button
             x-on:click="show = ! show"
             type="button"
             tabindex="-1"
-            class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-xl text-slate-500 transition hover:text-teal-400"
+            class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-slate-400 transition hover:text-teal-600 dark:hover:text-teal-400"
             aria-label="Passwort anzeigen"
         >
             <template x-if="show">

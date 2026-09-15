@@ -1,3 +1,3 @@
-<div {{ $attributes->class(['auth-actions']) }}>
+<div {{ $attributes->class(['flex flex-col gap-2']) }}>
     {{ $slot }}
 </div>

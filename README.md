@@ -2,6 +2,8 @@
 
 Livewire-basiertes Authentifizierungs-Package für Laravel-Anwendungen. Es liefert fertige UI-Komponenten für Login, Registrierung, Passwort-Reset, E-Mail-Verifizierung und E-Mail-basierte Zwei-Faktor-Authentifizierung (2FA) — inklusive Rate-Limiting, Session-Härtung und konfigurierbaren Feature-Flags.
 
+Die Auth-UI ist ein Split-Screen (Teal-Markenpanel links, Formular rechts) mit Labels über den Feldern und Placeholders. Nutzertexte sind Deutsch; Light- und Dark-Mode folgen dem Guest-Layout.
+
 ---
 
 ## Schnellstart (Schritt für Schritt)
@@ -90,7 +92,7 @@ Optional in `.env`:
 ```env
 COMPONIST_AUTH_VERIFICATION=false
 COMPONIST_AUTH_TWO_FACTOR=false
-COMPONIST_AUTH_REGISTER=true
+COMPONIST_AUTH_REGISTER=false
 COMPONIST_AUTH_RESET_PASSWORDS=true
 ```
 
@@ -138,8 +140,6 @@ Im Browser: `/login` aufrufen, einloggen, Redirect auf `config('componist_auth.h
 **Logout in Blade:**
 
 ```blade
-<a href="{{ route('componist.auth.logout') }}">Abmelden</a>
-{{-- oder --}}
 <x-componist-auth::logout-form />
 ```
 
@@ -174,7 +174,7 @@ Produktion: [Produktions-Checkliste](#produktions-checkliste).
 | Bereich | Beschreibung |
 |--------|--------------|
 | **Login** | E-Mail/Passwort, „Angemeldet bleiben“, Session-Regeneration nach erfolgreichem Login |
-| **Registrierung** | Optional per Config/Env abschaltbar (Standard: in Production deaktiviert) |
+| **Registrierung** | Optional per Config/Env; Standard **aus** (`COMPONIST_AUTH_REGISTER=false`) |
 | **Passwort vergessen** | Laravel `Password`-Broker, neutrale Antwort (keine User-Enumeration) |
 | **Passwort zurücksetzen** | Token-basierter Reset via Livewire |
 | **E-Mail-Verifizierung** | Optional; Laravel `MustVerifyEmail` + signierte Verify-Route |
@@ -238,7 +238,7 @@ Alle Einstellungen unter dem Config-Key `componist_auth` (Datei `config/componis
 |----------|----------|--------------|
 | `COMPONIST_AUTH_VERIFICATION` | `false` | E-Mail-Verifizierung nach Login/Register |
 | `COMPONIST_AUTH_TWO_FACTOR` | `false` | E-Mail-OTP nach Login |
-| `COMPONIST_AUTH_REGISTER` | `true` außer Production | Öffentliche Registrierung |
+| `COMPONIST_AUTH_REGISTER` | `false` | Öffentliche Registrierung (nur bewusst aktivieren) |
 | `COMPONIST_AUTH_RESET_PASSWORDS` | `true` | Passwort-vergessen-Flow |
 
 ### Config-Datei (Auszug)
@@ -255,7 +255,7 @@ return [
     'layouts-app' => \Componist\Core\View\Components\GuestLayout::class, // Pflicht — siehe Abschnitt unten
     'user_model' => \App\Models\User::class,
     'features' => [
-        'register' => (bool) env('COMPONIST_AUTH_REGISTER', env('APP_ENV') !== 'production'),
+        'register' => (bool) env('COMPONIST_AUTH_REGISTER', false),
         'resetPasswords' => (bool) env('COMPONIST_AUTH_RESET_PASSWORDS', true),
     ],
     'login' => [
@@ -536,6 +536,10 @@ SESSION_SAME_SITE=lax
 ```
 
 ---
+
+## Nutzung
+
+Siehe [Routen](#routen), [Abläufe](#abläufe) und [Integration in deine Laravel-Anwendung](#integration-in-deine-laravel-anwendung).
 
 ## Routen
 
@@ -833,6 +837,17 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 
 ---
 
+## Commands
+
+Keine Artisan-Commands in diesem Package.
+
+## Berechtigungen
+
+- Gast-Routen (Login, Register, Forgot/Reset) hinter `guest`
+- Geschützte App-Routen: Middleware `auth` (Package-`Authenticate` inkl. Verify-Email / 2FA je nach Feature-Flags)
+- Feature-Flags in `componist_auth` (`register`, `verification`, `two_factor`, …) schalten Seiten ab (`abort(404)` wenn deaktiviert)
+- Kein separates Admin-Gate — Auth ist die Einstiegsschicht; Admin-Gates liegen in Feature-Packages
+
 ## Produktions-Checkliste
 
 - [ ] `COMPONIST_AUTH_REGISTER=false`
@@ -851,6 +866,10 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 - [ ] Blade-Links zum Login: `route('login')` oder `route('componist.auth.login')` (beides gleichwertig)
 
 ---
+
+## Hinweise
+
+Siehe [Produktions-Checkliste](#produktions-checkliste) und [Sicherheit](#sicherheit). Kurz: Register default aus, Mailer für 2FA/Verify prüfen, HTTPS/Session-Cookies in Production setzen.
 
 ## Tests & Qualitätssicherung
 

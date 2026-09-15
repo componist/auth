@@ -6,7 +6,7 @@ namespace Componist\Auth\Middleware;
 
 use Closure;
 use Componist\Auth\Support\ComponistAuthConfig;
-use Illuminate\Database\Eloquent\Model;
+use Componist\Auth\Support\TwoFactorSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,13 +22,7 @@ class TwoFactorMiddleware
             return $next($request);
         }
 
-        $user = Auth::user();
-
-        if (
-            $user instanceof Model
-            && is_string($user->getAttribute('two_factor_code'))
-            && $user->getAttribute('two_factor_code') !== ''
-        ) {
+        if (! TwoFactorSession::isConfirmed(Auth::user())) {
             return redirect()->route('componist.auth.twoFactorAuth');
         }
 

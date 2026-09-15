@@ -1,6 +1,6 @@
 <x-componist-auth::auth-page
     title="Passwort vergessen"
-    subtitle="Wir senden dir einen Link zum Zurücksetzen deines Passworts."
+    subtitle="Wir senden dir einen Link zum Zurücksetzen."
     meta-description="Passwort zurücksetzen bei {{ config('app.name') }}. Fordere einen sicheren Reset-Link per E-Mail an."
 >
     @if ($status == null)
@@ -10,6 +10,7 @@
                 name="email"
                 field="email"
                 type="email"
+                placeholder="name@firma.de"
                 wire:model="email"
                 autocomplete="email"
                 required
@@ -33,7 +34,7 @@
 
     <x-slot:footer>
         <x-componist-auth::auth-link :href="route('componist.auth.login')">
-            Zurück zum Login
+            Zurück zur Anmeldung
         </x-componist-auth::auth-link>
     </x-slot:footer>
 </x-componist-auth::auth-page>

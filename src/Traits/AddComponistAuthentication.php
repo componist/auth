@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Componist\Auth\Traits;
 
 use Componist\Auth\Contracts\TwoFactorAuthenticatable;
+use Componist\Auth\Domain\TwoFactorCode as TwoFactorCodeHasher;
 use Componist\Auth\Notifications\TwoFactorCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -17,7 +18,7 @@ trait AddComponistAuthentication
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         $this->forceFill([
-            'two_factor_code' => self::hashTwoFactorCode($code),
+            'two_factor_code' => TwoFactorCodeHasher::hash($code),
             'two_factor_expires_at' => now()->addMinutes(10),
         ])->save();
 
@@ -38,18 +39,12 @@ trait AddComponistAuthentication
 
     public static function hashTwoFactorCode(string $code): string
     {
-        return hash('sha256', $code);
+        return TwoFactorCodeHasher::hash($code);
     }
 
     public static function verifyTwoFactorCode(Model $user, string $code): bool
     {
-        $stored = $user->getAttribute('two_factor_code');
-
-        if (! is_string($stored) || $stored === '') {
-            return false;
-        }
-
-        return hash_equals($stored, self::hashTwoFactorCode($code));
+        return TwoFactorCodeHasher::verify($code, $user->getAttribute('two_factor_code'));
     }
 
     public static function twoFactorExpiresAt(Model $user): ?Carbon

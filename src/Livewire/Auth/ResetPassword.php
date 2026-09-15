@@ -7,10 +7,14 @@ namespace Componist\Auth\Livewire\Auth;
 use Componist\Auth\Livewire\Concerns\RendersAuthView;
 use Componist\Auth\Support\AuthView;
 use Componist\Auth\Support\ComponistAuthConfig;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -65,11 +69,20 @@ class ResetPassword extends Component
             function (Model $user): void {
                 $user->forceFill([
                     'password' => $this->password,
+                    'remember_token' => Str::random(60),
                 ])->save();
+
+                if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+                    DB::table('sessions')->where('user_id', $user->getKey())->delete();
+                }
+
+                event(new PasswordReset($user));
             }
         );
 
         if ($status === Password::PASSWORD_RESET) {
+            session()->flash('status', 'Dein Passwort wurde erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.');
+
             $this->redirect(route(ComponistAuthConfig::loginRoute()), navigate: true);
 
             return;

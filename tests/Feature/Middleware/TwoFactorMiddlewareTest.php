@@ -57,4 +57,19 @@ class TwoFactorMiddlewareTest extends TestCase
 
         $this->assertTrue($response->isRedirect(route('componist.auth.twoFactorAuth')));
     }
+
+    public function test_redirects_when_two_factor_is_enabled_without_session_confirmation(): void
+    {
+        $this->enableTwoFactor();
+
+        $user = $this->createUser();
+        $this->actingAs($user);
+
+        $middleware = new TwoFactorMiddleware;
+        $request = Request::create('/dashboard', 'GET');
+
+        $response = $middleware->handle($request, fn () => new Response('OK'));
+
+        $this->assertTrue($response->isRedirect(route('componist.auth.twoFactorAuth')));
+    }
 }

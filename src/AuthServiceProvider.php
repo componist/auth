@@ -10,6 +10,8 @@ use Componist\Auth\Livewire\Auth\TwoFactorAuthController;
 use Componist\Auth\Livewire\Auth\UserLoginController;
 use Componist\Auth\Livewire\Auth\UserRegisterController;
 use Componist\Auth\Livewire\Auth\VerifyEmail;
+use Componist\Auth\Middleware\Authenticate as ComponistAuthenticate;
+use Componist\Auth\Middleware\EnsureSecondaryAuthentication;
 use Componist\Auth\Middleware\TwoFactorMiddleware;
 use Componist\Auth\Middleware\VerifyEmailMiddleware;
 use Componist\Auth\Support\ComponistAuthConfig;
@@ -67,8 +69,10 @@ class AuthServiceProvider extends ServiceProvider
         Livewire::component('auth.reset-password', ResetPassword::class);
 
         $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('auth', ComponistAuthenticate::class);
         $router->aliasMiddleware('twofactor', TwoFactorMiddleware::class);
         $router->aliasMiddleware('verify', VerifyEmailMiddleware::class);
+        $router->pushMiddlewareToGroup('web', EnsureSecondaryAuthentication::class);
 
         ResetPasswordNotification::createUrlUsing(
             fn (object $notifiable, string $token): string => route('componist.auth.password.reset', [

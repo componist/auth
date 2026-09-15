@@ -118,4 +118,29 @@ class UserRegisterControllerTest extends TestCase
 
         $component->assertHasErrors(['email']);
     }
+
+    public function test_register_rate_limits_successful_signups(): void
+    {
+        $this->clearRateLimiter('register-success|'.request()->ip());
+
+        for ($i = 0; $i < 3; $i++) {
+            Livewire::test(UserRegisterController::class)
+                ->set('name', 'User '.$i)
+                ->set('email', "ok{$i}@example.com")
+                ->set('password', 'password123')
+                ->set('password_confirmation', 'password123')
+                ->call('register')
+                ->assertRedirect(route('dashboard.index'));
+
+            $this->post(route('componist.auth.logout'));
+        }
+
+        Livewire::test(UserRegisterController::class)
+            ->set('name', 'Blocked')
+            ->set('email', 'blocked@example.com')
+            ->set('password', 'password123')
+            ->set('password_confirmation', 'password123')
+            ->call('register')
+            ->assertHasErrors(['email']);
+    }
 }

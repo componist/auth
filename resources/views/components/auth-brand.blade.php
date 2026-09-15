@@ -1,5 +1,6 @@
 @props([
     'brand' => null,
+    'tone' => 'default',
 ])
 
 @php
@@ -11,19 +12,18 @@
     $logoHref = AuthBranding::logoHref();
     $logoHeight = AuthBranding::logoHeight();
     $showBrandName = AuthBranding::showBrandName();
+    $onBrand = $tone === 'on-brand';
 @endphp
 
-<header {{ $attributes->class(['auth-brand-bar']) }}>
+<header {{ $attributes->class(['flex items-center gap-2.5']) }}>
     @if ($logoUrl)
         @if ($logoHref)
-            <a href="{{ $logoHref }}" class="auth-brand-logo-link" aria-label="{{ $logoAlt }}">
+            <a href="{{ $logoHref }}" class="inline-flex items-center" aria-label="{{ $logoAlt }}">
                 <img
                     src="{{ $logoUrl }}"
                     alt="{{ $logoAlt }}"
-                    class="auth-brand-logo"
-                    style="--auth-logo-height: {{ $logoHeight }};"
-                    width="auto"
-                    height="auto"
+                    class="w-auto"
+                    style="height: {{ $logoHeight }};"
                     decoding="async"
                 >
             </a>
@@ -31,23 +31,27 @@
             <img
                 src="{{ $logoUrl }}"
                 alt="{{ $logoAlt }}"
-                class="auth-brand-logo"
-                style="--auth-logo-height: {{ $logoHeight }};"
-                width="auto"
-                height="auto"
+                class="w-auto"
+                style="height: {{ $logoHeight }};"
                 decoding="async"
             >
         @endif
     @else
-        <div class="auth-brand-mark" aria-hidden="true">
-            <svg class="h-5 w-5 text-teal-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
-            </svg>
+        <div
+            class="{{ $onBrand
+                ? 'flex size-8 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25'
+                : 'flex size-8 items-center justify-center rounded-lg bg-teal-500 text-white' }}"
+            aria-hidden="true"
+        >
+            <span class="{{ $onBrand ? 'size-3 rotate-45 rounded-[3px] bg-white' : 'size-3 rotate-45 rounded-[3px] bg-white' }}"></span>
         </div>
     @endif
 
     @if ($showBrandName)
-        <p class="auth-brand-name">{{ $brandName }}</p>
+        <p class="{{ $onBrand
+            ? 'text-sm font-semibold tracking-tight text-white'
+            : 'text-sm font-semibold tracking-tight text-slate-900 dark:text-white' }}">
+            {{ $brandName }}
+        </p>
     @endif
 </header>

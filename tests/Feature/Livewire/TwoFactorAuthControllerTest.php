@@ -6,6 +6,7 @@ namespace Componist\Auth\Tests\Feature\Livewire;
 
 use Componist\Auth\Livewire\Auth\TwoFactorAuthController;
 use Componist\Auth\Notifications\TwoFactorCode;
+use Componist\Auth\Support\TwoFactorSession;
 use Componist\Auth\Tests\TestCase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,6 +45,7 @@ class TwoFactorAuthControllerTest extends TestCase
         $user->refresh();
         $this->assertNull($user->two_factor_code);
         $this->assertNull($user->two_factor_expires_at);
+        $this->assertTrue(TwoFactorSession::isConfirmed($user));
     }
 
     public function test_login_with_invalid_code_shows_error_and_allows_retry(): void
@@ -87,7 +89,7 @@ class TwoFactorAuthControllerTest extends TestCase
             ->set('twoFactorAuthCode', '999999')
             ->call('generate')
             ->assertSet('twoFactorAuthCode', '')
-            ->assertSet('loginMessage', null);
+            ->assertSet('loginMessage', 'Ein neuer Code wurde gesendet.');
 
         Notification::assertSentTo($user->fresh(), TwoFactorCode::class);
     }

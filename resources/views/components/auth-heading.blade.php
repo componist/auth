@@ -3,12 +3,11 @@
     'headingId' => 'auth-page-title',
 ])
 
-<header {{ $attributes->class(['mb-6 sm:mb-8']) }}>
-    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-teal-400">Authentifizierung</p>
-    <h1 id="{{ $headingId }}" class="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+<header {{ $attributes->class(['flex flex-col gap-1']) }}>
+    <h1 id="{{ $headingId }}" class="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
         {{ $slot }}
     </h1>
     @if ($subtitle)
-        <p class="mt-2 text-sm leading-relaxed text-slate-400 sm:mt-3">{{ $subtitle }}</p>
+        <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">{{ $subtitle }}</p>
     @endif
 </header>

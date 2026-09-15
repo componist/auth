@@ -61,15 +61,15 @@ class AuthRoutesTest extends TestCase
         );
     }
 
-    public function test_logout_logs_user_out_via_get(): void
+    public function test_logout_rejects_get(): void
     {
         $user = $this->createUser();
 
         $this->actingAs($user)
             ->get(route('componist.auth.logout'))
-            ->assertRedirect(route('componist.auth.login'));
+            ->assertMethodNotAllowed();
 
-        $this->assertGuest();
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_logout_logs_user_out_via_post(): void

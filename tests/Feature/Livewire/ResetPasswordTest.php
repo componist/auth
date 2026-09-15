@@ -7,6 +7,8 @@ namespace Componist\Auth\Tests\Feature\Livewire;
 use App\Models\User;
 use Componist\Auth\Livewire\Auth\ResetPassword;
 use Componist\Auth\Tests\TestCase;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
@@ -28,7 +30,10 @@ class ResetPasswordTest extends TestCase
 
     public function test_reset_password_updates_password_and_redirects_to_login(): void
     {
+        Event::fake([PasswordReset::class]);
+
         $user = $this->createUser();
+        $previousRememberToken = $user->remember_token;
         $token = Password::createToken($user);
 
         Livewire::test(ResetPassword::class, ['token' => $token])
@@ -41,6 +46,10 @@ class ResetPasswordTest extends TestCase
         $user->refresh();
 
         $this->assertTrue(Hash::check('new-password-99', $user->password));
+        $this->assertNotSame($previousRememberToken, $user->remember_token);
+        Event::assertDispatched(PasswordReset::class, function (PasswordReset $event) use ($user): bool {
+            return (int) $event->user->getAuthIdentifier() === (int) $user->id;
+        });
     }
 
     public function test_reset_password_with_invalid_token_shows_error(): void

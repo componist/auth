@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Componist\Auth\Livewire\Auth;
 
 use Componist\Auth\Livewire\Concerns\RendersAuthView;
+use Componist\Auth\Application\TwoFactorAuthService;
 use Componist\Auth\Support\AuthView;
 use Componist\Auth\Support\AuthenticatedUser;
 use Componist\Auth\Support\ComponistAuthConfig;
+use Componist\Auth\Support\TwoFactorSession;
 use Componist\Auth\Traits\AddComponistAuthentication;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -61,13 +63,13 @@ class TwoFactorAuthController extends Component
 
         $user = AuthenticatedUser::twoFactor();
 
-        if (! AddComponistAuthentication::twoFactorExpiresAt($user)?->isFuture()) {
+        if (! TwoFactorAuthService::expiresAt($user)?->isFuture()) {
             $this->loginMessage = 'Der Code ist abgelaufen. Bitte fordere einen neuen Code an.';
 
             return;
         }
 
-        if (! AddComponistAuthentication::verifyTwoFactorCode($user, $validated['twoFactorAuthCode'])) {
+        if (! TwoFactorAuthService::verify($user, $validated['twoFactorAuthCode'])) {
             RateLimiter::hit($this->loginThrottleKey(), 900);
 
             $this->loginMessage = 'Ungültiger Code.';
@@ -78,6 +80,7 @@ class TwoFactorAuthController extends Component
         RateLimiter::clear($this->loginThrottleKey());
         $user->resetTwoFactorCode();
         session()->regenerate();
+        TwoFactorSession::confirm($user->getAuthIdentifier());
 
         $this->redirect(route(ComponistAuthConfig::homeRoute()), navigate: true);
     }
@@ -98,7 +101,8 @@ class TwoFactorAuthController extends Component
         $this->ensureGenerateIsNotRateLimited();
 
         AuthenticatedUser::twoFactor()->generateTwoFactorCode();
-        $this->loginMessage = null;
+        RateLimiter::hit($this->generateThrottleKey(), 60);
+        $this->loginMessage = 'Ein neuer Code wurde gesendet.';
         $this->twoFactorAuthCode = '';
     }
 

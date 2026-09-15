@@ -11,7 +11,13 @@
             </svg>
         </x-componist-auth::auth-icon-badge>
 
-        <p class="max-w-xs text-sm leading-relaxed text-slate-400">
+        @if ($statusMessage)
+            <x-componist-auth::auth-alert variant="success" class="text-center">
+                {{ $statusMessage }}
+            </x-componist-auth::auth-alert>
+        @endif
+
+        <p class="max-w-xs text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             Keine E-Mail erhalten? Prüfe den Spam-Ordner oder fordere eine neue Bestätigung an.
         </p>
 

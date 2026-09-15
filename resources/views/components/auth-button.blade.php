@@ -5,9 +5,10 @@
 
 <button
     {{ $attributes->class([
-        'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-teal-500/30 transition',
-        'hover:bg-teal-600 hover:shadow-lg hover:shadow-teal-500/35',
-        'focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:ring-offset-2 focus:ring-offset-slate-900',
+        'inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-500/25 transition',
+        'hover:bg-teal-600 hover:shadow-md hover:shadow-teal-500/30',
+        'focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:ring-offset-2 focus:ring-offset-white',
+        'dark:focus:ring-offset-slate-900',
         'active:scale-[0.99]',
         'disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none',
     ]) }}

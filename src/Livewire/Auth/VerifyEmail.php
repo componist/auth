@@ -19,6 +19,8 @@ class VerifyEmail extends Component
 {
     use RendersAuthView;
 
+    public ?string $statusMessage = null;
+
     public function mount(): void
     {
         if (! ComponistAuthConfig::verificationEnabled()) {
@@ -59,6 +61,7 @@ class VerifyEmail extends Component
         RateLimiter::hit($this->throttleKey(), 60);
 
         AuthenticatedUser::twoFactor()->sendEmailVerificationNotification();
+        $this->statusMessage = 'Eine neue Bestätigungs-E-Mail wurde gesendet.';
     }
 
     protected function throttleKey(): string

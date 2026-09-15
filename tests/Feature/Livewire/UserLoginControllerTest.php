@@ -19,7 +19,7 @@ class UserLoginControllerTest extends TestCase
     {
         Livewire::test(UserLoginController::class)
             ->assertStatus(200)
-            ->assertSee('Login');
+            ->assertSee('Anmelden');
     }
 
     public function test_login_with_valid_credentials_redirects_to_dashboard(): void
@@ -44,7 +44,7 @@ class UserLoginControllerTest extends TestCase
             ->set('password', 'wrong-password')
             ->call('login')
             ->assertHasErrors(['email'])
-            ->assertSee('Login');
+            ->assertSee('Anmelden');
 
         $this->assertGuest();
 

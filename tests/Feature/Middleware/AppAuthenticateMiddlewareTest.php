@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Componist\Auth\Tests\Feature\Middleware;
 
+use Componist\Auth\Support\TwoFactorSession;
 use Componist\Auth\Tests\TestCase;
 
 class AppAuthenticateMiddlewareTest extends TestCase
@@ -55,5 +56,31 @@ class AppAuthenticateMiddlewareTest extends TestCase
             ->assertRedirect(route('login'));
 
         $this->assertGuest();
+    }
+
+    public function test_dashboard_redirects_to_two_factor_when_session_is_not_confirmed(): void
+    {
+        $this->enableTwoFactor();
+
+        $user = $this->createUser();
+        $this->actingAs($user);
+
+        $this->get(route('dashboard.index'))
+            ->assertRedirect(route('componist.auth.twoFactorAuth'));
+
+        $this->get(route('package.todo.liste'))
+            ->assertRedirect(route('componist.auth.twoFactorAuth'));
+    }
+
+    public function test_dashboard_is_reachable_after_two_factor_session_confirmation(): void
+    {
+        $this->enableTwoFactor();
+
+        $user = $this->createUser();
+        $this->actingAs($user);
+        TwoFactorSession::confirm($user->id);
+
+        $this->get(route('dashboard.index'))->assertOk();
+        $this->get(route('package.todo.liste'))->assertOk();
     }
 }

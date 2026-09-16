@@ -9,7 +9,7 @@ Livewire-basierte Authentifizierung: Login, Registrierung, Passwort-Reset, E-Mai
 - Gehört rein: Auth-UI, Middleware (2FA, Verify-Email), User-Migrationen des Packages
 - Gehört nicht: User-Manager, Profil-Dashboard (→ `componist/core`)
 - Root-App: `App\Models\User` implementiert `TwoFactorAuthenticatable`
-- Abhängigkeit: `livewire/livewire` ^4
+- Abhängigkeit: `livewire/livewire` ^4, `componist/core` ^1.0 (UI-Primitives)
 
 ## Struktur
 

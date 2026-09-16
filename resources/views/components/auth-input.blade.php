@@ -7,7 +7,7 @@
 @php
     $inputId = $attributes->get('id') ?? $name;
     $errorField = $field ?? $name;
-    $controlClass = 'block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-teal-500';
+    $controlClass = \Componist\Core\Support\Ui::FIELD;
 @endphp
 
 <div class="flex flex-col gap-1.5">

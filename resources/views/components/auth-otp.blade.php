@@ -20,7 +20,7 @@
             autocomplete="one-time-code"
             placeholder="000000"
             {{ $attributes->class([
-                'block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-11 text-center text-lg font-semibold tracking-[0.35em] text-slate-900 shadow-sm outline-none transition placeholder:text-slate-300 placeholder:tracking-[0.35em] focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-600 dark:focus:border-teal-500',
+                \Componist\Core\Support\Ui::FIELD.' pr-11 text-center text-lg font-semibold tracking-[0.35em] placeholder:tracking-[0.35em] placeholder:text-slate-300 dark:placeholder:text-slate-600',
             ]) }}
         />
         @if ($clearAction)

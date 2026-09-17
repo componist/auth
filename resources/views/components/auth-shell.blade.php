@@ -11,16 +11,7 @@
         'relative min-h-screen overflow-hidden text-slate-900 transition-colors duration-500 dark:text-slate-100',
         'bg-[#f4f5f3] dark:bg-black',
     ]) }}
-    x-data="{
-        dark: document.documentElement.classList.contains('dark'),
-        ready: false,
-        toggleDark() {
-            this.dark = !this.dark;
-            document.documentElement.classList.toggle('dark', this.dark);
-            localStorage.setItem('theme', this.dark ? 'dark' : 'light');
-            window.dispatchEvent(new CustomEvent('auth-theme-change', { detail: { dark: this.dark } }));
-        }
-    }"
+    x-data="{ ready: false }"
     x-init="$nextTick(() => { ready = true })"
 >
     {{-- wire:ignore: Livewire-Morph darf Canvas nicht auf Default 300×150 zurücksetzen --}}
@@ -40,14 +31,14 @@
         type="button"
         x-cloak
         x-show="ready"
-        x-on:click="toggleDark()"
+        x-on:click="$store.theme.toggle()"
         class="absolute right-5 top-5 z-20 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-slate-900/10 bg-white/90 text-slate-500 shadow-sm backdrop-blur-sm transition hover:border-teal-500/40 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/40 dark:border-white/10 dark:bg-[#121212]/90 dark:text-slate-400 dark:hover:text-white"
         aria-label="Darstellung umschalten"
     >
-        <span x-show="!dark" x-cloak>
+        <span x-show="! $store.theme.dark" x-cloak>
             <x:component::icon.moon class="h-5 w-5" />
         </span>
-        <span x-show="dark" x-cloak>
+        <span x-show="$store.theme.dark" x-cloak>
             <x:component::icon.sun class="h-5 w-5" />
         </span>
     </button>

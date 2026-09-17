@@ -63,6 +63,24 @@ final class ComponistAuthConfig
         return self::bool('componist_auth.two-factor');
     }
 
+    public static function twoFactorCodeCharset(): string
+    {
+        $charset = config('componist_auth.two_factor_code.charset', 'alphanumeric');
+
+        if (! is_string($charset) || $charset === '') {
+            $charset = 'alphanumeric';
+        }
+
+        return \Componist\Auth\Domain\TwoFactorCode::normalizeCharset($charset);
+    }
+
+    public static function twoFactorCodeLength(): int
+    {
+        $length = (int) config('componist_auth.two_factor_code.length', 12);
+
+        return \Componist\Auth\Domain\TwoFactorCode::normalizeLength($length);
+    }
+
     public static function registerEnabled(): bool
     {
         return (bool) config('componist_auth.features.register', false);

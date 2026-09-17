@@ -23,15 +23,15 @@ class EnsureSecondaryAuthentication
     ];
 
     /**
+     * Only challenge components may skip secondary auth. Guest auth components
+     * are omitted: Authenticated requests never need them, and listing them
+     * allowed forged companions to bypass 2FA for mixed Livewire batches.
+     *
      * @var list<string>
      */
     private const SKIP_LIVEWIRE_COMPONENTS = [
         'auth.two-factor-auth-controller',
         'auth.verify-email',
-        'auth.login',
-        'auth.register',
-        'auth.forgot-password',
-        'auth.reset-password',
     ];
 
     /**
@@ -80,24 +80,30 @@ class EnsureSecondaryAuthentication
 
     private function isAuthChallengeLivewireUpdate(Request $request): bool
     {
-        foreach ($request->input('components', []) as $component) {
+        $components = $request->input('components', []);
+
+        if (! is_array($components) || $components === []) {
+            return false;
+        }
+
+        foreach ($components as $component) {
             if (! is_array($component)) {
-                continue;
+                return false;
             }
 
             $snapshot = $component['snapshot'] ?? null;
             if (! is_string($snapshot) || $snapshot === '') {
-                continue;
+                return false;
             }
 
             $decoded = json_decode($snapshot, true);
             $name = is_array($decoded) ? ($decoded['memo']['name'] ?? null) : null;
 
-            if (is_string($name) && in_array($name, self::SKIP_LIVEWIRE_COMPONENTS, true)) {
-                return true;
+            if (! is_string($name) || ! in_array($name, self::SKIP_LIVEWIRE_COMPONENTS, true)) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 }

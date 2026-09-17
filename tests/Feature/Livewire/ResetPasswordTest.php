@@ -11,6 +11,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 class ResetPasswordTest extends TestCase
@@ -61,7 +62,36 @@ class ResetPasswordTest extends TestCase
             ->set('password', 'new-password-99')
             ->set('password_confirmation', 'new-password-99')
             ->call('resetPassword')
-            ->assertHasErrors(['email']);
+            ->assertHasErrors(['email' => ResetPassword::GENERIC_FAILURE_MESSAGE]);
+    }
+
+    public function test_reset_password_unknown_email_shows_same_generic_error(): void
+    {
+        Livewire::test(ResetPassword::class, ['token' => 'invalid-token'])
+            ->set('email', 'unknown@example.com')
+            ->set('password', 'new-password-99')
+            ->set('password_confirmation', 'new-password-99')
+            ->call('resetPassword')
+            ->assertHasErrors(['email' => ResetPassword::GENERIC_FAILURE_MESSAGE]);
+    }
+
+    public function test_reset_password_rate_limits_after_five_attempts(): void
+    {
+        $email = 'throttle-reset@example.com';
+        $key = Str::transliterate('password-reset|'.Str::lower($email).'|'.request()->ip());
+        $this->clearRateLimiter($key);
+
+        $component = Livewire::test(ResetPassword::class, ['token' => 'invalid-token'])
+            ->set('email', $email)
+            ->set('password', 'new-password-99')
+            ->set('password_confirmation', 'new-password-99');
+
+        for ($i = 0; $i < 6; $i++) {
+            $component->call('resetPassword');
+        }
+
+        $component->assertHasErrors(['email']);
+        $this->assertStringContainsString('Zu viele Versuche', $component->errors()->first('email'));
     }
 
     public function test_reset_password_validates_password_confirmation(): void

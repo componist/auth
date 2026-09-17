@@ -1,6 +1,16 @@
+@php
+    use Componist\Auth\Support\ComponistAuthConfig;
+
+    $length = ComponistAuthConfig::twoFactorCodeLength();
+    $charset = ComponistAuthConfig::twoFactorCodeCharset();
+    $subtitle = $charset === 'digits'
+        ? "Gib den {$length}-stelligen Zahlen-Code aus deiner E-Mail ein."
+        : "Gib den {$length}-stelligen Code (Zahlen und Buchstaben) aus deiner E-Mail ein.";
+@endphp
+
 <x-componist-auth::auth-page
     title="Zwei-Faktor-Authentifizierung"
-    subtitle="Gib den sechsstelligen Code aus deiner E-Mail ein."
+    :subtitle="$subtitle"
     meta-description="Zwei-Faktor-Authentifizierung bei {{ config('app.name') }}. Gib den Sicherheitscode aus deiner E-Mail ein."
 >
     <x-componist-auth::auth-form wire:submit="login">

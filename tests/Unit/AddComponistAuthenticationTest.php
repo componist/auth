@@ -45,6 +45,11 @@ class AddComponistAuthenticationTest extends TestCase
     {
         Notification::fake();
 
+        config([
+            'componist_auth.two_factor_code.charset' => 'alphanumeric',
+            'componist_auth.two_factor_code.length' => 6,
+        ]);
+
         $user = $this->createUser();
 
         $user->generateTwoFactorCode();
@@ -52,10 +57,12 @@ class AddComponistAuthenticationTest extends TestCase
         $user->refresh();
 
         $this->assertNotNull($user->two_factor_code);
-        $this->assertNotSame('123456', $user->two_factor_code);
+        $this->assertSame(64, strlen((string) $user->two_factor_code));
         $this->assertTrue($user->two_factor_expires_at?->isFuture() ?? false);
 
-        Notification::assertSentTo($user, TwoFactorCode::class);
+        Notification::assertSentTo($user, TwoFactorCode::class, function (TwoFactorCode $notification): bool {
+            return (bool) preg_match('/^[A-Z0-9]{6}$/', $notification->code);
+        });
     }
 
     public function test_reset_two_factor_code_clears_fields(): void

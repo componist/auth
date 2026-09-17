@@ -5,7 +5,16 @@
 ])
 
 @php
+    use Componist\Auth\Support\ComponistAuthConfig;
+
     $inputId = $attributes->get('id', 'auth_otp_code');
+    $charset = ComponistAuthConfig::twoFactorCodeCharset();
+    $length = ComponistAuthConfig::twoFactorCodeLength();
+    $digitsOnly = $charset === 'digits';
+    $placeholder = $digitsOnly ? str_repeat('0', $length) : str_repeat('A', $length);
+    $inputmode = $digitsOnly ? 'numeric' : 'text';
+    $pattern = $digitsOnly ? '[0-9]*' : '[A-Za-z0-9]*';
+    $autocompleteCasing = $digitsOnly ? '' : ' uppercase';
 @endphp
 
 <div class="flex flex-col gap-1.5">
@@ -14,13 +23,13 @@
         <input
             id="{{ $inputId }}"
             type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="6"
+            inputmode="{{ $inputmode }}"
+            pattern="{{ $pattern }}"
+            maxlength="{{ $length }}"
             autocomplete="one-time-code"
-            placeholder="000000"
+            placeholder="{{ $placeholder }}"
             {{ $attributes->class([
-                \Componist\Core\Support\Ui::FIELD.' pr-11 text-center text-lg font-semibold tracking-[0.35em] placeholder:tracking-[0.35em] placeholder:text-slate-300 dark:placeholder:text-slate-600',
+                \Componist\Core\Support\Ui::FIELD.' pr-11 text-center text-lg font-semibold tracking-[0.35em] placeholder:tracking-[0.35em] placeholder:text-slate-300 dark:placeholder:text-slate-600'.$autocompleteCasing,
             ]) }}
         />
         @if ($clearAction)

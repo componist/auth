@@ -7,6 +7,7 @@ namespace Componist\Auth\Traits;
 use Componist\Auth\Contracts\TwoFactorAuthenticatable;
 use Componist\Auth\Domain\TwoFactorCode as TwoFactorCodeHasher;
 use Componist\Auth\Notifications\TwoFactorCode;
+use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
@@ -15,7 +16,10 @@ trait AddComponistAuthentication
 {
     public function generateTwoFactorCode(): void
     {
-        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = TwoFactorCodeHasher::generate(
+            ComponistAuthConfig::twoFactorCodeCharset(),
+            ComponistAuthConfig::twoFactorCodeLength(),
+        );
 
         $this->forceFill([
             'two_factor_code' => TwoFactorCodeHasher::hash($code),

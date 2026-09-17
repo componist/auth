@@ -22,6 +22,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Two-Factor Code Format
+    |--------------------------------------------------------------------------
+    |
+    | Nur über diese Config (nach Publish: config/componist_auth.php) — nicht via .env.
+    |
+    | charset:
+    |   - "alphanumeric" — Zahlen und Buchstaben (Default)
+    |   - "digits"       — nur Ziffern 0–9
+    |
+    | length: 4–12 Zeichen (Default 12)
+     */
+    'two_factor_code' => [
+        'charset' => 'alphanumeric',
+        'length' => 12,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Home Path
     |--------------------------------------------------------------------------
      */

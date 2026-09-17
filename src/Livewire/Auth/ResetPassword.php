@@ -12,15 +12,19 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 class ResetPassword extends Component
 {
     use RendersAuthView;
+
+    public const GENERIC_FAILURE_MESSAGE = 'Passwort konnte nicht zurückgesetzt werden. Link prüfen oder erneut anfordern.';
 
     public string $email = '';
 
@@ -53,6 +57,8 @@ class ResetPassword extends Component
 
     public function resetPassword(): void
     {
+        $this->ensureIsNotRateLimited();
+
         $this->validate([
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed'],
@@ -80,6 +86,8 @@ class ResetPassword extends Component
             }
         );
 
+        RateLimiter::hit($this->throttleKey(), 60);
+
         if ($status === Password::PASSWORD_RESET) {
             session()->flash('status', 'Dein Passwort wurde erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.');
 
@@ -88,12 +96,24 @@ class ResetPassword extends Component
             return;
         }
 
-        if (! is_string($status)) {
-            $this->addError('email', 'Passwort konnte nicht zurückgesetzt werden.');
+        $this->addError('email', self::GENERIC_FAILURE_MESSAGE);
+    }
 
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
-        $this->addError('email', __($status));
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => "Zu viele Versuche. Bitte warte {$seconds} Sekunden.",
+        ]);
+    }
+
+    protected function throttleKey(): string
+    {
+        return Str::transliterate('password-reset|'.Str::lower($this->email).'|'.request()->ip());
     }
 }

@@ -46,9 +46,11 @@
         </div>
 
         @isset($footer)
-            <x-componist-auth::auth-footer>
-                {{ $footer }}
-            </x-componist-auth::auth-footer>
+            <div class="border-t border-slate-900/10 pt-6 dark:border-slate-400/10">
+                <x-componist-auth::auth-footer>
+                    {{ $footer }}
+                </x-componist-auth::auth-footer>
+            </div>
         @endisset
     </x-componist-auth::auth-card>
 </x-componist-auth::auth-shell>

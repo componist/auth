@@ -8,6 +8,7 @@ use App\Models\User;
 use Componist\Auth\Livewire\Auth\ForgotPassword;
 use Componist\Auth\Tests\TestCase;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -43,6 +44,31 @@ class ForgotPasswordTest extends TestCase
             'token' => $notification->token,
             'email' => $user->email,
         ], false), (string) $mail->actionUrl);
+    }
+
+    public function test_reset_link_url_uses_app_url_not_request_host(): void
+    {
+        Notification::fake();
+        config(['app.url' => 'http://app.example.test']);
+
+        $this->app->instance('request', Request::create(
+            'http://evil-attacker.test/forgot-password',
+            'POST',
+            server: ['HTTP_HOST' => 'evil-attacker.test'],
+        ));
+
+        $user = $this->createUser(['email' => 'host-poison@example.com']);
+
+        Livewire::test(ForgotPassword::class)
+            ->set('email', $user->email)
+            ->call('sendResetLink');
+
+        $notification = Notification::sent($user, ResetPassword::class)->first();
+        $this->assertNotNull($notification);
+        $actionUrl = (string) $notification->toMail($user)->actionUrl;
+
+        $this->assertStringStartsWith('http://app.example.test/', $actionUrl);
+        $this->assertStringNotContainsString('evil-attacker.test', $actionUrl);
     }
 
     public function test_send_reset_link_shows_same_message_for_unknown_email(): void

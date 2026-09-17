@@ -26,6 +26,8 @@ abstract class TestCase extends BaseTestCase
             'componist_auth.home' => 'dashboard.index',
             'componist_auth.verification' => false,
             'componist_auth.two-factor' => false,
+            'componist_auth.two_factor_code.charset' => 'alphanumeric',
+            'componist_auth.two_factor_code.length' => 6,
             'componist_auth.features.register' => true,
             'componist_auth.features.resetPasswords' => true,
             'componist_auth.user_model' => User::class,

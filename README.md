@@ -247,6 +247,12 @@ Alle Einstellungen unter dem Config-Key `componist_auth` (Datei `config/componis
 return [
     'verification' => (bool) env('COMPONIST_AUTH_VERIFICATION', false),
     'two-factor' => (bool) env('COMPONIST_AUTH_TWO_FACTOR', false),
+    'two_factor_code' => [
+        // charset: "alphanumeric" (Zahlen+Buchstaben, Default) | "digits" (nur Ziffern)
+        'charset' => 'alphanumeric',
+        // length: 4–12 (Default 12) — nur hier, nicht via .env
+        'length' => 12,
+    ],
     'home' => 'dashboard.index', // Named Route nach erfolgreichem Login
     'routes' => [
         'login' => 'componist.auth.login',
@@ -276,6 +282,8 @@ return [
 | `routes.verification_notice` | Routenname für Verify-Hinweis (`ComponistAuthConfig::verificationNoticeRoute()`) |
 | `layouts-app` | **Pflicht** — siehe [Layout (`layouts-app`)](#layout-layouts-app) |
 | `user_model` | Muss `Model`, `Authenticatable` und `TwoFactorAuthenticatable` erfüllen |
+| `two_factor_code.charset` | `alphanumeric` (Default) oder `digits` — **nur** publishbare Config, nicht via `.env` |
+| `two_factor_code.length` | OTP-Länge 4–12 (Default 12) — **nur** publishbare Config, nicht via `.env` |
 | `features.register` | Bei `false`: Register-Route liefert 404 |
 | `features.resetPasswords` | Bei `false`: Forgot-Password-Route liefert 404 |
 
@@ -806,9 +814,11 @@ Die Views verwenden Livewire `wire:loading` / `wire:target` für Submit-Buttons 
 | 2FA-Speicherung | Nur Hash (SHA-256), kein Klartext in der DB |
 | 2FA-Vergleich | `hash_equals` |
 | 2FA-Zufall | `random_int`, nicht `rand()` |
-| 2FA-Pending-Sperre | Geschützte Routen gesperrt, bis OTP bestätigt (`two_factor_code` geleert) — auch bei abgelaufenem Code |
-| Rate-Limiting | Login, Register, Forgot, 2FA, Verify-Throttle |
-| User-Enumeration (Reset) | Einheitliche Erfolgsmeldung |
+| 2FA-Pending-Sperre | Geschützte Routen gesperrt, bis OTP bestätigt (`TwoFactorSession`) — auch bei abgelaufenem Code |
+| Livewire 2FA-Gate | `EnsureSecondaryAuthentication` skipped nur Batches, in denen **alle** Komponenten Challenge-Komponenten sind |
+| Reset-/Verify-URLs | Absolute Links immer über `config('app.url')` (`CanonicalUrl`) — unabhängig vom Request-`Host` |
+| Rate-Limiting | Login, Register, Forgot, Reset, 2FA, Verify-Throttle |
+| User-Enumeration (Forgot/Reset) | Einheitliche Erfolgs- bzw. Fehlermeldung |
 | Demo-Login | Beispiel-Credentials nur außerhalb `production` in `UserLoginController::mount()` |
 | CSRF | Standard Laravel `web`-Stack |
 | Feature-Flags | Deaktivierte Features → `abort(404)` auf den jeweiligen Livewire-Seiten |

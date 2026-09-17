@@ -14,6 +14,7 @@ use Componist\Auth\Middleware\Authenticate as ComponistAuthenticate;
 use Componist\Auth\Middleware\EnsureSecondaryAuthentication;
 use Componist\Auth\Middleware\TwoFactorMiddleware;
 use Componist\Auth\Middleware\VerifyEmailMiddleware;
+use Componist\Auth\Support\CanonicalUrl;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Componist\Auth\Support\ComponistAuthRouteAliases;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -75,20 +76,24 @@ class AuthServiceProvider extends ServiceProvider
         $router->pushMiddlewareToGroup('web', EnsureSecondaryAuthentication::class);
 
         ResetPasswordNotification::createUrlUsing(
-            fn (object $notifiable, string $token): string => route('componist.auth.password.reset', [
-                'token' => $token,
-                'email' => $notifiable->getEmailForPasswordReset(),
-            ]),
+            fn (object $notifiable, string $token): string => CanonicalUrl::usingAppUrl(
+                fn (): string => route('componist.auth.password.reset', [
+                    'token' => $token,
+                    'email' => $notifiable->getEmailForPasswordReset(),
+                ]),
+            ),
         );
 
         VerifyEmailNotification::createUrlUsing(
-            fn (object $notifiable): string => URL::temporarySignedRoute(
-                'componist.auth.verification.verify',
-                Carbon::now()->addMinutes((int) Config::get('auth.verification.expire', 60)),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ],
+            fn (object $notifiable): string => CanonicalUrl::usingAppUrl(
+                fn (): string => URL::temporarySignedRoute(
+                    'componist.auth.verification.verify',
+                    Carbon::now()->addMinutes((int) Config::get('auth.verification.expire', 60)),
+                    [
+                        'id' => $notifiable->getKey(),
+                        'hash' => sha1($notifiable->getEmailForVerification()),
+                    ],
+                ),
             ),
         );
 

@@ -6,11 +6,11 @@ namespace Componist\Auth\Livewire\Auth;
 
 use Componist\Auth\Livewire\Concerns\RendersAuthView;
 use Componist\Auth\Application\TwoFactorAuthService;
+use Componist\Auth\Domain\TwoFactorCode;
 use Componist\Auth\Support\AuthView;
 use Componist\Auth\Support\AuthenticatedUser;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Componist\Auth\Support\TwoFactorSession;
-use Componist\Auth\Traits\AddComponistAuthentication;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -56,10 +56,20 @@ class TwoFactorAuthController extends Component
 
         $this->ensureLoginIsNotRateLimited();
 
+        $charset = ComponistAuthConfig::twoFactorCodeCharset();
+        $length = ComponistAuthConfig::twoFactorCodeLength();
+
         /** @var array{twoFactorAuthCode: string} $validated */
         $validated = $this->validate([
-            'twoFactorAuthCode' => ['required', 'digits:6'],
+            'twoFactorAuthCode' => TwoFactorCode::validationRules($charset, $length),
+        ], [
+            'twoFactorAuthCode.required' => 'Der Sicherheitscode ist erforderlich.',
+            'twoFactorAuthCode.digits' => "Der Sicherheitscode muss aus {$length} Ziffern bestehen.",
+            'twoFactorAuthCode.size' => "Der Sicherheitscode muss {$length} Zeichen lang sein.",
+            'twoFactorAuthCode.regex' => 'Der Sicherheitscode darf nur erlaubte Zahlen und Buchstaben enthalten.',
         ]);
+
+        $code = TwoFactorCode::normalize($validated['twoFactorAuthCode'], $charset);
 
         $user = AuthenticatedUser::twoFactor();
 
@@ -69,7 +79,7 @@ class TwoFactorAuthController extends Component
             return;
         }
 
-        if (! TwoFactorAuthService::verify($user, $validated['twoFactorAuthCode'])) {
+        if (! TwoFactorAuthService::verify($user, $code)) {
             RateLimiter::hit($this->loginThrottleKey(), 900);
 
             $this->loginMessage = 'Ungültiger Code.';

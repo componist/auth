@@ -51,4 +51,22 @@ class ComponistAuthConfigTest extends TestCase
         $this->assertTrue(ComponistAuthConfig::twoFactorEnabled());
         $this->assertFalse(ComponistAuthConfig::registerEnabled());
     }
+
+    public function test_two_factor_code_defaults_to_alphanumeric_length_twelve(): void
+    {
+        config([
+            'componist_auth.two_factor_code.charset' => 'alphanumeric',
+            'componist_auth.two_factor_code.length' => 12,
+        ]);
+
+        $this->assertSame('alphanumeric', ComponistAuthConfig::twoFactorCodeCharset());
+        $this->assertSame(12, ComponistAuthConfig::twoFactorCodeLength());
+    }
+
+    public function test_two_factor_code_charset_can_be_digits(): void
+    {
+        config(['componist_auth.two_factor_code.charset' => 'digits']);
+
+        $this->assertSame('digits', ComponistAuthConfig::twoFactorCodeCharset());
+    }
 }

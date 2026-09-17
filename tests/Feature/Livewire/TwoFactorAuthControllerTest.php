@@ -125,6 +125,34 @@ class TwoFactorAuthControllerTest extends TestCase
         $component->assertHasErrors(['twoFactorAuthCode']);
     }
 
+    public function test_login_accepts_alphanumeric_code_case_insensitive(): void
+    {
+        $user = $this->createUser();
+        $this->userWithTwoFactorCode($user, 'AB12CD');
+
+        Livewire::actingAs($user)
+            ->test(TwoFactorAuthController::class)
+            ->set('twoFactorAuthCode', 'ab12cd')
+            ->call('login')
+            ->assertRedirect(route('dashboard.index'));
+
+        $this->assertTrue(TwoFactorSession::isConfirmed($user->fresh()));
+    }
+
+    public function test_digits_charset_rejects_letters(): void
+    {
+        config(['componist_auth.two_factor_code.charset' => 'digits']);
+
+        $user = $this->createUser();
+        $this->userWithTwoFactorCode($user, '123456');
+
+        Livewire::actingAs($user)
+            ->test(TwoFactorAuthController::class)
+            ->set('twoFactorAuthCode', 'AB12CD')
+            ->call('login')
+            ->assertHasErrors(['twoFactorAuthCode']);
+    }
+
     public function test_unauthenticated_login_redirects_to_auth_login(): void
     {
         Livewire::test(TwoFactorAuthController::class)

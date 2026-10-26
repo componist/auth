@@ -8,6 +8,7 @@ use Componist\Auth\Livewire\Concerns\RendersAuthView;
 use Componist\Auth\Support\AuthView;
 use Componist\Auth\Support\ComponistAuthConfig;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,7 @@ class ResetPassword extends Component
                 'password_confirmation' => $this->password_confirmation,
                 'token' => $this->token,
             ],
-            function (Model $user): void {
+            function (Model&Authenticatable $user): void {
                 $user->forceFill([
                     'password' => $this->password,
                     'remember_token' => Str::random(60),

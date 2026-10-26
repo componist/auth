@@ -98,6 +98,9 @@ final class TwoFactorCode
         };
     }
 
+    /**
+     * @return self::CHARSET_*
+     */
     public static function normalizeCharset(string $charset): string
     {
         $charset = strtolower(trim($charset));

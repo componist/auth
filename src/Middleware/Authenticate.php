@@ -6,13 +6,12 @@ namespace Componist\Auth\Middleware;
 
 use Closure;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class Authenticate extends Middleware
 {
     /**
-     * @param  array<int, string>  $guards
+     * @param  string  ...$guards
      */
     public function handle($request, Closure $next, ...$guards): Response
     {

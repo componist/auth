@@ -19,6 +19,9 @@ use Componist\Auth\Support\ComponistAuthConfig;
 use Componist\Auth\Support\ComponistAuthRouteAliases;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -76,7 +79,7 @@ class AuthServiceProvider extends ServiceProvider
         $router->pushMiddlewareToGroup('web', EnsureSecondaryAuthentication::class);
 
         ResetPasswordNotification::createUrlUsing(
-            fn (object $notifiable, string $token): string => CanonicalUrl::usingAppUrl(
+            fn (CanResetPassword $notifiable, string $token): string => CanonicalUrl::usingAppUrl(
                 fn (): string => route('componist.auth.password.reset', [
                     'token' => $token,
                     'email' => $notifiable->getEmailForPasswordReset(),
@@ -85,7 +88,7 @@ class AuthServiceProvider extends ServiceProvider
         );
 
         VerifyEmailNotification::createUrlUsing(
-            fn (object $notifiable): string => CanonicalUrl::usingAppUrl(
+            fn (Model&MustVerifyEmail $notifiable): string => CanonicalUrl::usingAppUrl(
                 fn (): string => URL::temporarySignedRoute(
                     'componist.auth.verification.verify',
                     Carbon::now()->addMinutes((int) Config::get('auth.verification.expire', 60)),
